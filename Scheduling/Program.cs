@@ -11,6 +11,7 @@ namespace Scheduling
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+            builder.Services.AddSession();
 
             var connectionString = builder.Configuration.GetConnectionString("Scheduling");
             builder.Services.AddDbContext<SchedulingContext>(options => options.UseSqlServer(connectionString));
@@ -29,7 +30,7 @@ namespace Scheduling
             app.UseStaticFiles();
 
             app.UseRouting();
-
+            app.UseSession();
             app.UseAuthorization();
 
             app.MapControllerRoute(
