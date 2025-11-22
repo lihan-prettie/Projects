@@ -8,5 +8,9 @@ namespace Scheduling.Controllers
         {
             return View();
         }
+        public IActionResult Boss() => View();
+        public IActionResult Manager() => View();
+        public IActionResult Employee() => View();
+
     }
 }

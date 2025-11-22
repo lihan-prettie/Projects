@@ -29,7 +29,18 @@ namespace Scheduling.Controllers
             if (user == null) {
                 return Json(new { success = false, message = "使用者不存在" });
             }
-            return Json(new { success = true, message = "登入成功!" });
+
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+            HttpContext.Session.SetString("UserName", user.UserName);
+            HttpContext.Session.SetInt32("RoleId", user.RoleId);
+            string redirectUrl = user.RoleId switch
+            {
+                1 => "/Dashboard/Boss",
+                2 => "/Dashboard/Manager",
+                3 => "/Dashboard/Employee",
+                _ => "/"
+            };
+            return Json(new { success = true, redirectUrl });
         }
     }
 }
