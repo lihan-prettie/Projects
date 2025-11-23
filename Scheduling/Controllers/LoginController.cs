@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Scheduling.Models;
 using Scheduling.Models.ViewModels;
+using Scheduling.Helpers;
 
 namespace Scheduling.Controllers
 {
@@ -28,6 +29,15 @@ namespace Scheduling.Controllers
             var user = _context.Users.FirstOrDefault(u => u.UserEmail == model.UserEmail);
             if (user == null) {
                 return Json(new { success = false, message = "使用者不存在" });
+            }
+
+            string salt = user.PasswordSalt ?? "";
+            string storeHash = user.UserPassword;
+
+            bool isValid = PasswordHelper.VerifyPassword(model.UserPassword, salt, storeHash);
+            if (!isValid)
+            {
+                return Json(new{ success=false,message="密碼錯誤"});
             }
 
             HttpContext.Session.SetInt32("UserId", user.UserId);
