@@ -19,9 +19,9 @@
 
 <h1>使用者登入</h1>
 <h3>電子信箱:</h3>
-<input type="email" placeholder="xx@mail.com" id="account"/>
+<input type="email" placeholder="xx@mail.com" id="account" class="form-control" />
 <h3>密碼:</h3>
-<input type="text" id="password"/>
+<input type="password" id="password" class="form-control" />
 <button id="confirm" class="btn btn-outline-warning">確認</button>
 
 @section Scripts{
@@ -38,7 +38,7 @@
                     title:"請重新輸入",
                     text:"帳號密碼為必填欄位",
                     icon:"error",
-                    confirmbuttontext:"確認",
+                    confirmButtonText:"確認",
                 });
                 return;
             }else{
@@ -52,11 +52,11 @@
                                 window.location.href=res.redirectUrl;
                             });
                         }else{
-                            Swal.fire("登入失敗","","error");
+                            Swal.fire("登入失敗","請重新確認並輸入正確的帳號密碼","error");
                         }
-                    }
+                    },
                     error:function(){
-                        Swal.fire("錯誤","伺服器錯誤","error");
+                        Swal.fire("錯誤","請聯絡工程師","error");
                     }
                 });
             };
