@@ -26,7 +26,7 @@ namespace Scheduling.Controllers
             {
                 return Json(new { success = false, message = "輸入資料不完整" });
             }
-            var user = _context.Users.FirstOrDefault(u => u.UserEmail == model.UserEmail);
+            var user = _context.Users.FirstOrDefault(u => u.UserEmail == model.UserEmail && u.IsActive==true);
             if (user == null) {
                 return Json(new { success = false, message = "使用者不存在" });
             }

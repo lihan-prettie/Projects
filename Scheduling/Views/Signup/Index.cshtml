@@ -27,11 +27,11 @@
 <span style="display:none;color:red;" id="nameError">必填欄位未填寫</span>
 
 <h3>電子信箱:</h3>
-<input type="email" placeholder="xx@mail.com" id="email" class="form-control" />
+<input type="email" placeholder="xx@mail.com" id="email" class="form-control" name="email" />
 <span style="display:none;color:red;" id="emailError">必填欄位未填寫</span>
 
 <h3>密碼:</h3>
-<input type="password" id="password" class="form-control" />
+<input type="password" id="password" class="form-control" name="password"/>
 <span style="display:none;color:red;" id="passwordError">必填欄位未填寫</span>
 <span style="display:none;color:red;" id="pswError">密碼與確認密碼不一致</span>
 
@@ -47,6 +47,7 @@
 
     <script>
         let emailValid = false;
+        const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\s]).{8,}$/;
 
         // ✅ 統一驗證函式：控制按鈕啟用
         function checkFormValid() {
@@ -54,10 +55,10 @@
             const email = $("#email").val().trim();
             const password = $("#password").val().trim();
             const checkPassword = $("#checkPassword").val().trim();
-
+            const passwordsafe = passwordPattern.test(password);
             const allFilled = name && email && password && checkPassword;
             const pswValid = password === checkPassword;
-            const valid = allFilled && pswValid && emailValid;
+            const valid = allFilled && pswValid && emailValid&&passwordsafe;
             $("#confirm").prop("disabled", !valid);
         }
 
@@ -71,13 +72,7 @@
         // ✅ blur 時檢查是否空白
         $("#name,#email,#password").on("blur", () => {
             const name = $("#name").val().trim();
-            const email = $("#email").val().trim();
-            const password = $("#password").val().trim();
-
             if (!name) { $("#nameError").show(); $("#name").addClass("is-invalid"); }
-            if (!email) { $("#emailError").show(); $("#email").addClass("is-invalid"); }
-            if (!password) { $("#passwordError").show(); $("#password").addClass("is-invalid"); }
-
             checkFormValid();
         });
 
@@ -98,8 +93,7 @@
         // ✅ Email 檢查（含格式與重複）
         $("#email").on("blur", () => {
             const email = $("#email").val().trim().toLowerCase();
-            if (!email) return;
-
+            if (!email) { $("#emailError").show(); $("#email").addClass("is-invalid"); return}
             // 格式檢查
             const emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
             if (!emailPattern.test(email)) {
@@ -135,5 +129,47 @@
                 },
             });
         });
+
+        $("#password").on("blur",()=>{
+            const password = $("#password").val().trim();
+            
+
+            if(!passwordPattern.test(password)){
+                $("#passwordError").text("密碼長度至少8碼，且必須含英文大小寫、阿拉伯數字和特殊符號").show(); 
+                $("#password").addClass("is-invalid");
+            }else{
+                $("#passwordError").hide();
+                $("#password").removeClass("is-invalid");
+            }
+            checkFormValid();
+        });
+
+        $("#confirm").on("click",()=>{
+            const name = $("#name").val().trim();
+            const email = $("#email").val().trim();
+            const password = $("#password").val().trim();
+            const checkPassword = $("#checkPassword").val().trim();
+            $.ajax({
+                type:"POST",
+                url:"/Signup/Signup",
+                data:{UserName:name,UserEmail:email,UserPassword:password,ConfirmPassword:checkPassword},
+                success:(res)=>{
+                    if(res.success){
+                        Swal.fire({
+                        title: "註冊成功",
+                        text: "",
+                        icon: "success",
+                        showConfirmButton: true,
+                    }).then(() => {
+                        $("#name, #email, #password, #checkPassword").val("");
+                        window.location.href = "/Login/Index";
+                    });
+                    }else{
+                        Swal.fire("註冊失敗",res.message,"error");
+                    }
+                },
+                error:()=>{},
+            });
+        })
     </script>
 }
