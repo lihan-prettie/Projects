@@ -48,7 +48,13 @@
                     data:{UserEmail:account,UserPassword:password},
                     success:function(res){
                         if(res.success){
-                            Swal.fire("登入成功","","success").then(()=>{
+                            Swal.fire({
+                                title:"登入成功",
+                                text:"",
+                                icon:"success",
+                                timer:1500,
+                                showConfirmButton:false,
+                            }).then(()=>{
                                 window.location.href=res.redirectUrl;
                             });
                         }else{
