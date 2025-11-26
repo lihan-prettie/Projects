@@ -83,30 +83,68 @@
 <div id="calendar"></div>
 
 @section Scripts {
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
             const calendarEl = document.getElementById("calendar");
-            const currentYear = new Date().getFullYear();
 
-            // 取得 JSON 資料
-            const res = await fetch(`/api/Holiday/${currentYear}`);
-            const data = await res.json();
+            // 🧭 當前年月
+            const today = new Date();
+            const currentYear = today.getFullYear();
+            const nextYear = today.getFullYear()+1;
+            const nextMonth = today.getMonth() + 1; // 0-based index
+            const nextMonthYear = today.getFullYear() + Math.floor(nextMonth / 12);
 
+            // 🧩 同時載入節日資料
+            const [data1, data2] = await Promise.all([
+                fetch(`/api/Holiday/${currentYear}`).then(res => res.json()),
+                fetch(`/api/Holiday/${nextYear}`).then(res => res.json())
+            ]);
+            const data = [...data1, ...data2];
+
+            // 🗓️ 建立 FullCalendar
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 themeSystem: "bootstrap5",
                 locale: "zh-tw",
                 initialView: "dayGridMonth",
+                selectable: true,
 
                 headerToolbar: {
                     left: "prev today next",
                     center: "title",
-                    right: ""
+                    right: "dayGridMonth,list"
                 },
                 buttonText: { today: "今天" },
 
+                // ✅ 限制：僅允許選取 / 新增下個月的日期
+                selectAllow: (selectInfo) => {
+                    const start = selectInfo.start;
+                    return start.getMonth() === nextMonth % 12 && start.getFullYear() === nextMonthYear;
+                },
+
+                // ✅ 點擊日期時檢查月份
+                dateClick: (info) => {
+                    const d = info.date;
+                    if (d.getMonth() === nextMonth % 12 && d.getFullYear() === nextMonthYear) {
+                        Swal.fire({
+                            title: "新增工作",
+                            text: "這是下個月的日期，可以新增工作！",
+                            icon: "success",
+                            confirmButtonText: "確認"
+                        });
+                    } else {
+                        Swal.fire({
+                            title: "無法新增工作",
+                            text: "只能新增下一個月工作",
+                            icon: "warning",
+                            confirmButtonText: "確認"
+                        });
+                    }
+                },
+
+                // 🎨 標示節日
                 dayCellDidMount: (info) => {
-                    // ✅ 轉成本地日期字串 (避免 UTC 誤差)
                     const date = new Date(info.date.getTime() - info.date.getTimezoneOffset() * 60000);
                     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");
 
@@ -116,32 +154,28 @@
                     info.el.style.backgroundColor = "";
                     info.el.style.color = "#000";
 
-                    // 🎨 套用節日顏色與文字
                     if (holiday && holiday["是否放假"] === "2") {
-                        // 顏色邏輯
+                        // 顏色設定
                         if (holiday["星期"] === "六" || holiday["星期"] === "日") {
-                            info.el.style.backgroundColor = "#fffacd"; // 淺黃
+                            info.el.style.backgroundColor = "#fffacd"; // 淺黃 (週末)
                         } else {
-                            info.el.style.backgroundColor = "#ffe4b5"; // 淺橘
+                            info.el.style.backgroundColor = "#ffe4b5"; // 淺橘 (平日節日)
                         }
 
-                        // 🏷️ 若有備註，顯示在日期格中
+                        // 顯示備註
                         if (holiday["備註"]) {
                             const remarkEl = document.createElement("div");
                             remarkEl.textContent = holiday["備註"];
-                            remarkEl.style.position = "absolute"; // ✅ 浮動定位
-                            remarkEl.style.fontSize = "2rem";
+                            remarkEl.style.fontSize = "1rem";
                             remarkEl.style.color = "#b8860b";
                             remarkEl.style.fontWeight = "600";
-                            remarkEl.style.pointerEvents = "none"; // 不影響點擊事件
-                            remarkEl.style.whiteSpace = "nowrap";  // 不換行（可避免撐開）
-
-                            // ✅ 保證容器是相對定位，才會正確定位於格內
+                            remarkEl.style.position = "absolute";
+                            remarkEl.style.pointerEvents = "none";
+                            remarkEl.style.whiteSpace = "nowrap";
                             const frame = info.el.querySelector(".fc-daygrid-day-frame");
                             frame.style.position = "relative";
                             frame.appendChild(remarkEl);
                         }
-
                     }
                 }
             });
@@ -150,6 +184,5 @@
         });
     </script>
 }
-
 
 
