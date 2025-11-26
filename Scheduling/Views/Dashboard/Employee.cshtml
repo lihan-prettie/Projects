@@ -81,6 +81,13 @@
 }
 
 <div id="calendar"></div>
+<div class="modal fade" id="addWorkModal" tabindex="-1" aria-labelledby="addWorkModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" id="modalContainer">
+        </div>
+    </div>
+</div>
+
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -89,21 +96,21 @@
         document.addEventListener("DOMContentLoaded", async () => {
             const calendarEl = document.getElementById("calendar");
 
-            // 🧭 當前年月
+            // 當前年月
             const today = new Date();
             const currentYear = today.getFullYear();
             const nextYear = today.getFullYear()+1;
             const nextMonth = today.getMonth() + 1; // 0-based index
             const nextMonthYear = today.getFullYear() + Math.floor(nextMonth / 12);
 
-            // 🧩 同時載入節日資料
+            // 同時載入節日資料
             const [data1, data2] = await Promise.all([
                 fetch(`/api/Holiday/${currentYear}`).then(res => res.json()),
                 fetch(`/api/Holiday/${nextYear}`).then(res => res.json())
             ]);
             const data = [...data1, ...data2];
 
-            // 🗓️ 建立 FullCalendar
+            // 建立 FullCalendar
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 themeSystem: "bootstrap5",
                 locale: "zh-tw",
@@ -117,33 +124,39 @@
                 },
                 buttonText: { today: "今天" },
 
-                // ✅ 限制：僅允許選取 / 新增下個月的日期
+                // 限制：僅允許選取 / 新增下個月的日期
                 selectAllow: (selectInfo) => {
                     const start = selectInfo.start;
                     return start.getMonth() === nextMonth % 12 && start.getFullYear() === nextMonthYear;
                 },
 
-                // ✅ 點擊日期時檢查月份
+                // 點擊日期時檢查月份
                 dateClick: (info) => {
-                    const d = info.date;
-                    if (d.getMonth() === nextMonth % 12 && d.getFullYear() === nextMonthYear) {
-                        Swal.fire({
-                            title: "新增工作",
-                            text: "這是下個月的日期，可以新增工作！",
-                            icon: "success",
-                            confirmButtonText: "確認"
-                        });
-                    } else {
-                        Swal.fire({
-                            title: "無法新增工作",
-                            text: "只能新增下一個月工作",
-                            icon: "warning",
-                            confirmButtonText: "確認"
-                        });
-                    }
-                },
+                const d = info.date;
+                if (d.getMonth() === nextMonth % 12 && d.getFullYear() === nextMonthYear) {
+                    const date = info.date;
+                    const y = date.getFullYear();
+                    const m = date.getMonth() + 1;
+                    const day = date.getDate();
 
-                // 🎨 標示節日
+                    // 🧩 用 AJAX 載入 partial
+                    $("#modalContainer").load(`/Schedule/AddWorkPartial?date=${y}-${m}-${day}`, function () {
+                        // ✅ 載入完成後顯示 Bootstrap Modal
+                        const modal = new bootstrap.Modal(document.getElementById("addWorkModal"));
+                        modal.show();
+                    });
+                } else {
+                    Swal.fire({
+                        title: "無法新增工作",
+                        text: "只能新增下一個月工作",
+                        icon: "warning",
+                        confirmButtonText: "確認"
+                    });
+                }
+            },
+
+
+                // 標示節日
                 dayCellDidMount: (info) => {
                     const date = new Date(info.date.getTime() - info.date.getTimezoneOffset() * 60000);
                     const dateStr = date.toISOString().slice(0, 10).replace(/-/g, "");

@@ -1,16 +1,14 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Scheduling.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ScheduleController : ControllerBase
+    public class ScheduleController : Controller
     {
-        //[HttpGet]
-        //public IActionResult GetAll()
-        //{
-
-        //}
+        [HttpGet]
+        public IActionResult AddWorkPartial(DateTime date)
+        {
+            ViewData["SelectedDate"] = date.ToString("yyyy-MM-dd");
+            return PartialView("~/Views/ParticalView/_AddWorkPartial.cshtml");
+        }
     }
 }
