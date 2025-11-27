@@ -86,7 +86,6 @@ public partial class SchedulingContext : DbContext
 
             entity.HasOne(d => d.User).WithMany(p => p.ScheduleUsers)
                 .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK__Schedule__UserId__47DBAE45");
 
             entity.HasOne(d => d.Work).WithMany(p => p.Schedules)

@@ -15,6 +15,7 @@ namespace Scheduling
 
             var connectionString = builder.Configuration.GetConnectionString("Scheduling");
             builder.Services.AddDbContext<SchedulingContext>(options => options.UseSqlServer(connectionString));
+            builder.Services.AddScoped<WorkAutoGenerateService>();
 
             var app = builder.Build();
 
@@ -32,7 +33,6 @@ namespace Scheduling
             app.UseRouting();
             app.UseSession();
             app.UseAuthorization();
-
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller=Home}/{action=Index}/{id?}");
