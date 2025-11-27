@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Scheduling.Models;
-using Scheduling.Services;
 
 namespace Scheduling
 {

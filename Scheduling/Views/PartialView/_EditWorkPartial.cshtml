@@ -1,0 +1,119 @@
+﻿@model Scheduling.Models.ViewModels.EditScheduleViewModel
+
+<style>
+    .readonly-box input, .readonly-box textarea {
+        background-color: #f8f9fa !important;
+    }
+</style>
+
+<div class="modal-header bg-warning text-dark">
+    <h5 class="modal-title">班表資訊</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body readonly-box">
+    <form id="editScheduleForm">
+        <input type="hidden" name="ScheduleId" value="@Model.ScheduleId" />
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">工作名稱</label>
+            <input class="form-control" value="@Model.WorkName" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">日期</label>
+            <input class="form-control" value="@Model.ScheduleDate" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">時間</label>
+            <input class="form-control" value="@Model.StartTime ~ @Model.EndTime" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">工作地點</label>
+            <input class="form-control" value="@Model.WorkLocation" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">備註</label>
+            <textarea class="form-control" rows="2" readonly>@Model.WorkNote</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">狀態</label>
+            <input class="form-control" value="@Model.Status" readonly />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">使用者編號 (UserId)</label>
+            <input type="text" class="form-control" name="UserId" value="@Model.UserId" />
+        </div>
+
+        @if (Model.IsEditable)
+        {
+            <div class="d-flex justify-content-end">
+                <button type="button" id="releaseBtn" class="btn btn-outline-danger me-2">釋出班表</button>
+                <button type="submit" class="btn btn-warning me-2">儲存</button>
+                <button type="button" id="cancelBtn" class="btn btn-secondary">離開</button>
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted fw-bold">此班已被他人佔用，僅供查看</div>
+            <div class="d-flex justify-content-end mt-3">
+                <button type="button" id="cancelBtn" class="btn btn-secondary">離開</button>
+            </div>
+        }
+    </form>
+</div>
+<script>
+        // ✅ 避免重複宣告
+    if (typeof currentUserId === "undefined") {
+        var currentUserId = parseInt('@(Context.Session.GetInt32("UserId") ?? 0)');
+    }
+
+    $(function () {
+        const $userInput = $("input[name='UserId']");
+        let userIdVal = $userInput.val(); // 可能是 "", "null", "4"
+
+        // 正規化成可比較的值
+        const normalized = (userIdVal === "" || userIdVal === "null") ? null : parseInt(userIdVal);
+
+        // ✅ 空班 → 自動帶入目前登入者（只影響畫面與表單送出，不會立刻寫 DB）
+        if (normalized === null) {
+            $userInput.val(currentUserId);
+        }
+
+        // ✅ 他人班 → 鎖定表單（但允許「離開」）
+        if (normalized !== null && normalized !== currentUserId) {
+            $("#editScheduleForm :input").prop("disabled", true);
+            $("#cancelBtn").prop("disabled", false);
+        }
+    });
+
+        $("#releaseBtn").on("click", function () {
+        $("input[name='UserId']").val(0);
+        $("#editScheduleForm").submit();
+    });
+
+
+    // ✅ 儲存（空班搶班 / 自己班釋出或維持）
+    $("#editScheduleForm").on("submit", function (e) {
+        e.preventDefault();
+        this.UserId.value = $("input[name='UserId']").val().trim();
+        $.post("/Schedule/UpdateSchedule", $(this).serialize(), function (res) {
+            Swal.fire(res.success ? "成功" : "錯誤", res.message, res.success ? "success" : "error")
+              .then(() => {
+                  $("#addWorkModal").modal("hide");
+                  calendar.refetchEvents();
+              });
+        });
+    });
+
+    // ✅ 離開（不改動資料；符合你「離開不改」的規則）
+    $("#cancelBtn").on("click", function () {
+        $("#addWorkModal").modal("hide");
+    });
+</script>
+

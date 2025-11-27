@@ -9,7 +9,7 @@ public partial class Schedule
 {
     public int ScheduleId { get; set; }
 
-    public int UserId { get; set; }
+    public int? UserId { get; set; }
 
     public int WorkId { get; set; }
 

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Scheduling.Services;
 
 namespace Scheduling.Controllers
 {
@@ -28,7 +27,7 @@ namespace Scheduling.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            await _autoService.GenerateNextMonthWorkIfNotExistsAsync();
+            await _autoService.GenerateNextMonthScheduleIfNotExistsAsync();
             return View();
         }
 
@@ -39,7 +38,7 @@ namespace Scheduling.Controllers
                 return RedirectToAction("Index", "Login");
             }
 
-            await _autoService.GenerateNextMonthWorkIfNotExistsAsync();
+            await _autoService.GenerateNextMonthScheduleIfNotExistsAsync();
             return View();
         }
     }

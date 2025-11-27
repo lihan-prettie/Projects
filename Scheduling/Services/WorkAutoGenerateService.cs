@@ -1,73 +1,79 @@
-﻿using Scheduling.Helpers;
-using Scheduling.Models;
+﻿using Scheduling.Models;
+using Scheduling.Helpers;
+using Microsoft.EntityFrameworkCore;
 
-namespace Scheduling.Services
+public class WorkAutoGenerateService
 {
-    public class WorkAutoGenerateService
+    private readonly SchedulingContext _context;
+    private readonly IWebHostEnvironment _env;
+
+    public WorkAutoGenerateService(SchedulingContext context, IWebHostEnvironment env)
     {
-        private readonly SchedulingContext _context;
-        private readonly IWebHostEnvironment _env;
+        _context = context;
+        _env = env;
+    }
 
-        public WorkAutoGenerateService(SchedulingContext context, IWebHostEnvironment env)
+    public async Task GenerateNextMonthScheduleIfNotExistsAsync()
+    {
+        var today = DateTime.Today;
+        var nextMonth = today.AddMonths(1);
+        var firstDay = new DateTime(nextMonth.Year, nextMonth.Month, 1);
+        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+
+        // ✅ 檢查下個月是否已有排班
+        bool exists = await _context.Schedules
+            .AnyAsync(s => s.ScheduleDate >= DateOnly.FromDateTime(firstDay)
+                        && s.ScheduleDate <= DateOnly.FromDateTime(lastDay));
+
+        if (exists) return; // 防止重複執行
+
+        // ✅ 找出一般工作(一)、(二)
+        var work1 = await _context.Works.FirstOrDefaultAsync(w => w.WorkName == "一般工作(一)");
+        var work2 = await _context.Works.FirstOrDefaultAsync(w => w.WorkName == "一般工作(二)");
+        if (work1 == null || work2 == null) return;
+
+        // ✅ 載入假日資料
+        string json = await HolidayHelper.LoadHolidaysAsync(nextMonth.Year, _env);
+        var holidays = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, string>>>(json);
+        var holidayDates = holidays
+            .Where(h => h["是否放假"] == "2")
+            .Select(h => DateTime.ParseExact(h["西元日期"], "yyyyMMdd", null).Date)
+            .ToHashSet();
+
+        // ✅ 建立班表資料
+        var schedules = new List<Schedule>();
+        for (DateTime d = firstDay; d <= lastDay; d = d.AddDays(1))
         {
-            _context = context;
-            _env = env;
-        }
+            // 跳過週末與國定假日
+            if (d.DayOfWeek == DayOfWeek.Saturday || d.DayOfWeek == DayOfWeek.Sunday) continue;
+            if (holidayDates.Contains(d)) continue;
 
-        public async Task GenerateNextMonthWorkIfNotExistsAsync()
-        {
-            var today = DateTime.Today;
-
-            // 下個月的第一天與最後一天（都用 Date 層級避免時間差）
-            var nextMonthFirstDay = new DateTime(today.Year, today.Month, 1).AddMonths(1);
-            var nextMonthLastDay = nextMonthFirstDay.AddMonths(1).AddDays(-1);
-
-            // 建立時間（你原本要「前一個月的一號」）：
-            var createDate = new DateTime(today.Year, today.Month, 1);
-
-            // 防重邏輯最好依「要生成的月份」判斷，而不是今天月份
-            // 例如：只要已存在「系統自動生成」且 CreateDate == 本月一號 的資料，就不重複生成
-            bool alreadyGenerated = _context.Works.Any(w =>
-                w.WorkNote == "系統自動生成" &&
-                w.CreateDate.HasValue &&
-                w.CreateDate.Value.Date == createDate.Date);
-
-            if (alreadyGenerated) return;
-
-            // 取得下個年度的假日（或直接取下個月所屬年就好）
-            var holidays = await HolidayHelper.GetHolidayDatesAsync(nextMonthFirstDay.Year, _env);
-
-            // 為了加速判斷、避免時分秒干擾，用 Date 轉成 HashSet
-            var holidaySet = new HashSet<DateTime>(holidays.Select(h => h.Date));
-
-            var workList = new List<Work>();
-
-            for (var d = nextMonthFirstDay; d <= nextMonthLastDay; d = d.AddDays(1))
+            // 一般工作(一)
+            schedules.Add(new Schedule
             {
-                var isWeekend = d.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-                if (isWeekend) continue;
-                if (holidaySet.Contains(d.Date)) continue;
+                WorkId = work1.WorkId,
+                ScheduleDate = DateOnly.FromDateTime(d),
+                StartTime = d.Add(work1.DefaultStartTime?.ToTimeSpan() ?? new TimeSpan(9, 0, 0)),
+                EndTime = d.Add(work1.DefaultEndTime?.ToTimeSpan() ?? new TimeSpan(18, 0, 0)),
+                UserId = null,            // ✅ 無人
+                CreatedBy = null,         // ✅ 系統自動
+                Status = "Active"
+            });
 
-                for (int i = 1; i <= 2; i++)
-                {
-                    workList.Add(new Work
-                    {
-                        WorkName = $"一般工作({i})",
-                        WorkType = "Normal Work",
-                        WorkNote = "系統自動生成",
-                        IsActive = true,
-                        DefaultStartTime = new TimeOnly(9, 0),
-                        DefaultEndTime = new TimeOnly(18, 0),
-                        CreateDate = createDate,
-                        WorkLocation = "台北市中山區建國北路一段96號",
-                    });
-                }
-            }
-
-            if (workList.Count == 0) return;
-
-            _context.Works.AddRange(workList);
-            await _context.SaveChangesAsync();
+            // 一般工作(二)
+            schedules.Add(new Schedule
+            {
+                WorkId = work2.WorkId,
+                ScheduleDate = DateOnly.FromDateTime(d),
+                StartTime = d.Add(work2.DefaultStartTime?.ToTimeSpan() ?? new TimeSpan(9, 0, 0)),
+                EndTime = d.Add(work2.DefaultEndTime?.ToTimeSpan() ?? new TimeSpan(18, 0, 0)),
+                UserId = null,
+                CreatedBy = null,
+                Status = "Active"
+            });
         }
+
+        await _context.Schedules.AddRangeAsync(schedules);
+        await _context.SaveChangesAsync();
     }
 }
