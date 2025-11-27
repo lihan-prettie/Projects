@@ -1,0 +1,74 @@
+﻿
+/* ===== 整體背景與日曆外觀 ===== */
+body {
+    background-color: #fff8dc; /* 柔和黃色背景 */
+    font-family: 'Microsoft JhengHei', sans-serif;
+}
+
+#calendar {
+    background-color: #fff; /* 日曆白底 */
+    border: 3px solid #ffd700; /* 金黃色邊框 */
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(255, 165, 0, 0.2);
+    max-width: 90%;
+    margin: 30px auto;
+}
+
+/* ===== 星期與日期顏色 ===== */
+.fc-col-header-cell-cushion,
+.fc-daygrid-day-number {
+    color: #b8860b !important; /* 土黃色 */
+    font-weight: 600;
+}
+
+/* 日期 hover 效果 */
+.fc-daygrid-day:hover {
+    background-color: #ffa50033 !important; /* 淡橘色 */
+    cursor: pointer;
+}
+
+/* 今日日期 */
+.fc-day-today {
+    background-color: #ffcc80 !important; /* 橘黃底 */
+    border: 2px solid #ffa500 !important;
+    color: #b8860b !important;
+}
+
+/* 週末背景色 */
+.fc-day-sat,
+.fc-day-sun {
+    background-color: #fffacd !important; /* 淺黃色 */
+}
+
+/* ===== 按鈕樣式 ===== */
+.fc-button {
+    background-color: #ffeb3b !important; /* 亮黃 */
+    color: #b8860b !important; /* 土黃字 */
+    border: 1px solid #ffd700 !important;
+    font-weight: 600;
+    transition: 0.2s;
+}
+
+    .fc-button:hover {
+        background-color: #ffc107 !important; /* 深橘黃 */
+        color: #fff8dc !important; /* 字變亮 */
+    }
+
+/* 月份與年份置中 */
+.fc-toolbar-title {
+    color: #b8860b;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+}
+
+/* 工具列置中排列 */
+.fc-toolbar-chunk {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+

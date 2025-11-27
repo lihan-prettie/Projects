@@ -1,14 +1,26 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Scheduling.Models;
 
 namespace Scheduling.Controllers
 {
     public class ScheduleController : Controller
     {
-        [HttpGet]
-        public IActionResult AddWorkPartial(DateTime date)
+
+        private readonly SchedulingContext _context;
+        public ScheduleController(SchedulingContext context)
         {
-            ViewData["SelectedDate"] = date.ToString("yyyy-MM-dd");
-            return PartialView("~/Views/ParticalView/_AddWorkPartial.cshtml");
+            _context = context;
+        }
+        
+        //GET : Schedule/AddWorkPartial
+        [HttpGet]
+        public IActionResult EditWorkPartial(int workId,DateTime date)
+        {
+            int? userId = HttpContext.Session.GetInt32("UserId");
+            int? roleId = HttpContext.Session.GetInt32("RoleId");
+
+
+            return PartialView("~/Views/ParticalView/EditWorkPartial.cshtml");
         }
     }
 }
