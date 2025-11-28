@@ -121,6 +121,9 @@
             $("#modalContainer").load(`/Schedule/EditWorkPartial?scheduleId=${scheduleId}`, function () {
                 const modal = new bootstrap.Modal(document.getElementById("addWorkModal"));
                 modal.show();
+                setTimeout(() => {
+                    if (typeof updateMapPreview === "function") updateMapPreview();
+                }, 300);
             });
         },
 

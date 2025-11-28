@@ -155,27 +155,50 @@
     </button>
 </div>
 
-<!-- 🚗 新增出差 Modal -->
+<!-- 🚗 新增出差工作 + 排班 -->
 <div class="modal fade" id="addTripModal" tabindex="-1" aria-labelledby="addTripModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-warning text-white">
-                <h5 class="modal-title" id="addTripModalLabel"><i class="bi bi-briefcase-fill"></i> 新增出差工作</h5>
+                <h5 class="modal-title" id="addTripModalLabel"><i class="bi bi-briefcase-fill"></i> 新增出差工作與排班</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <label>出差名稱：</label>
-                <input type="text" id="tripName" class="form-control mb-2">
-                <label>出差地點：</label>
-                <input type="text" id="tripLocation" class="form-control">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label>出差名稱：</label>
+                        <input type="text" id="tripName" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label>出差地點：</label>
+                        <input type="text" id="tripLocation" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label>出差日期：</label>
+                        <input type="date" id="tripDate" class="form-control">
+                    </div>
+                    <div class="col-md-4">
+                        <label>開始時間：</label>
+                        <input type="time" id="tripStart" class="form-control" value="09:00">
+                    </div>
+                    <div class="col-md-4">
+                        <label>結束時間：</label>
+                        <input type="time" id="tripEnd" class="form-control" value="18:00">
+                    </div>
+                    <div class="col-12">
+                        <label>備註：</label>
+                        <textarea id="tripNote" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button type="button" class="btn btn-warning" onclick="submitBusinessTrip()">新增</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button class="btn btn-warning" onclick="submitBusinessTrip()">新增</button>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- 👥 修改角色 Modal -->
 <div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
@@ -213,19 +236,34 @@
             loadUserList();
         });
 
-        async function submitBusinessTrip() {
+                async function submitBusinessTrip() {
             const name = $("#tripName").val().trim();
             const loc = $("#tripLocation").val().trim();
-            if (!name) {
-                Swal.fire("請輸入出差名稱", "", "warning");
+            const date = $("#tripDate").val();
+            const start = $("#tripStart").val();
+            const end = $("#tripEnd").val();
+            const note = $("#tripNote").val();
+
+            if (!name || !date) {
+                Swal.fire("請填寫完整資料", "出差名稱與日期為必填", "warning");
                 return;
             }
+
+            const startTime = new Date(`${date}T${start}`);
+            const endTime = new Date(`${date}T${end}`);
 
             const res = await fetch(`/api/ScheduleApi/AddBusinessTrip`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ WorkName: name, WorkLocation: loc })
+                body: JSON.stringify({
+                    WorkName: name,
+                    WorkLocation: loc,
+                    WorkNote: note,
+                    StartTime: startTime,
+                    EndTime: endTime
+                })
             });
+
             const data = await res.json();
             if (data.success) {
                 Swal.fire("成功", data.message, "success");
@@ -235,6 +273,7 @@
                 Swal.fire("錯誤", data.message, "error");
             }
         }
+
 
         async function loadUserList() {
             const res = await fetch(`/Boss/GetAllUsers`);
