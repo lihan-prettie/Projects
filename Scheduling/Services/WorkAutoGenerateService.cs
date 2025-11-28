@@ -57,7 +57,8 @@ public class WorkAutoGenerateService
                 EndTime = d.Add(work1.DefaultEndTime?.ToTimeSpan() ?? new TimeSpan(18, 0, 0)),
                 UserId = null,            // ✅ 無人
                 CreatedBy = null,         // ✅ 系統自動
-                Status = "Active"
+                Status = "Active",
+                IsActive = true,
             });
 
             // 一般工作(二)
@@ -69,7 +70,8 @@ public class WorkAutoGenerateService
                 EndTime = d.Add(work2.DefaultEndTime?.ToTimeSpan() ?? new TimeSpan(18, 0, 0)),
                 UserId = null,
                 CreatedBy = null,
-                Status = "Active"
+                Status = "Active",
+                IsActive = true,
             });
         }
 

@@ -174,7 +174,7 @@
             const email = $("#email").val().trim().toLowerCase();
             if (!email) { $("#emailError").show(); $("#email").addClass("is-invalid"); return; }
 
-            const emailPattern = /^[^\\s@@]+@@[^\\s@@]+\\.[^\\s@@]+$/;
+            const emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
             if (!emailPattern.test(email)) {
                 $("#emailError").text("Email 格式不正確").show();
                 $("#email").addClass("is-invalid");
