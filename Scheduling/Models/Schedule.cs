@@ -27,6 +27,10 @@ public partial class Schedule
 
     public string Status { get; set; }
 
+    public DateOnly WorkDate { get; set; }
+
+    public bool IsActive { get; set; }
+
     public virtual User CreatedByNavigation { get; set; }
 
     public virtual User UpdatedByNavigation { get; set; }

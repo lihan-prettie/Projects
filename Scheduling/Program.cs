@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Scheduling.Models;
+using Scheduling.Services;
 
 namespace Scheduling
 {
@@ -20,6 +21,7 @@ namespace Scheduling
             var connectionString = builder.Configuration.GetConnectionString("Scheduling");
             builder.Services.AddDbContext<SchedulingContext>(options => options.UseSqlServer(connectionString));
             builder.Services.AddScoped<WorkAutoGenerateService>();
+            builder.Services.AddScoped<ScheduleService>();
             builder.Services.AddHttpContextAccessor();
 
             var app = builder.Build();
