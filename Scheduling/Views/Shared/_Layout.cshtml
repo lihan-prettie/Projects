@@ -1,46 +1,155 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+﻿@using Microsoft.AspNetCore.Http
+@inject IHttpContextAccessor HttpContextAccessor
+
+@{
+    var userName = HttpContextAccessor.HttpContext?.Session.GetString("UserName");
+    var userId = HttpContextAccessor.HttpContext?.Session.GetInt32("UserId");
+    var roleId = HttpContextAccessor.HttpContext?.Session.GetInt32("RoleId");
+    bool isLoggedIn = !string.IsNullOrEmpty(userName);
+}
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Scheduling</title>
+    <title>@ViewData["Title"] - 啃得基有限公司排班系統</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Scheduling.styles.css" asp-append-version="true" />
+
+    <style>
+        body {
+            background-color: #fff8dc;
+            font-family: "Microsoft JhengHei", sans-serif;
+        }
+
+        /* 導覽列 */
+        .navbar-custom {
+            background: linear-gradient(90deg, #ffb74d, #ffa500);
+            box-shadow: 0 3px 10px rgba(255, 165, 0, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 800;
+            color: #fff8dc !important;
+            letter-spacing: 1px;
+        }
+
+        .navbar-nav .nav-link {
+            color: #fffdf5 !important;
+            font-weight: 600;
+            margin-right: 10px;
+            transition: 0.3s;
+        }
+
+            .navbar-nav .nav-link:hover {
+                color: #fff;
+                text-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+            }
+
+        .nav-btn {
+            background-color: #ffeb3b;
+            border: none;
+            color: #b8860b;
+            font-weight: 600;
+            border-radius: 25px;
+            padding: 5px 18px;
+            transition: all 0.3s ease;
+        }
+
+            .nav-btn:hover {
+                background-color: #ffa500;
+                color: #fff8dc;
+                box-shadow: 0 0 8px rgba(255, 165, 0, 0.6);
+            }
+
+        .user-info {
+            color: #fffbea;
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        footer {
+            background-color: #fffbea;
+            border-top: 2px solid #ffd54f;
+            padding: 15px 0;
+            color: #b8860b;
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 60px;
+        }
+    </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg navbar-custom">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">首頁</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    🐔 啃得基排班系統
+                </a>
+
+                <button class="navbar-toggler text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                    <ul class="navbar-nav align-items-center">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Signup" asp-action="Index">註冊帳號</a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house-door-fill"></i> 首頁
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Index">使用者登入</a>
-                        </li>
+
+                        @if (!isLoggedIn)
+                        {
+                            <!-- 未登入顯示 -->
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Signup" asp-action="Index">
+                                    <i class="bi bi-person-plus-fill"></i> 註冊
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn nav-btn" asp-controller="Login" asp-action="Index">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> 登入
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <!-- 已登入顯示 -->
+                            <li class="nav-item user-info">
+                                👋 Hi, <span class="fw-bold">@userName</span>（ID: @userId）
+                            </li>
+                            <li class="nav-item">
+                                <form asp-controller="Login" asp-action="Logout" method="post" class="d-inline">
+                                    <button type="submit" class="btn nav-btn">
+                                        <i class="bi bi-box-arrow-right"></i> 登出
+                                    </button>
+                                </form>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+
+    <div class="container py-4">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - Scheduling - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer>
+        <div>
+            © 2025 啃得基有限公司 | Kentucky Co., Ltd. All rights reserved.
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

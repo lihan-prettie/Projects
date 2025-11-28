@@ -12,6 +12,20 @@
 </div>
 
 <div class="modal-body readonly-box">
+    @{
+        var count = ViewData["ShiftCount"] is int c ? c : 0;
+        var remainMin = Math.Max(0, 6 - count); // 還差幾班達到 6
+                                                // remainMax 可不用顯示，但保留在需要時使用
+    }
+
+    <div class="alert @(count >= 15 ? "alert-danger" : count < 6 ? "alert-warning" : "alert-success") text-center py-2 mb-3">
+        本月已排 <strong>@count</strong> 班，
+        最少需排 6 班、最多 15 班。
+        您還差 <strong>@remainMin</strong> 班即可達到最低標準。
+    </div>
+
+    <input type="hidden" id="originalUserId" value="@(ViewData["OriginalUserId"]?.ToString() ?? "")" />
+
     <form id="editScheduleForm">
         <input type="hidden" name="ScheduleId" value="@Model.ScheduleId" />
 
@@ -68,37 +82,44 @@
     </form>
 </div>
 <script>
-        // ✅ 避免重複宣告
+    // ✅ 避免重複宣告（Partial 會多次載入）
     if (typeof currentUserId === "undefined") {
         var currentUserId = parseInt('@(Context.Session.GetInt32("UserId") ?? 0)');
     }
 
     $(function () {
         const $userInput = $("input[name='UserId']");
-        let userIdVal = $userInput.val(); // 可能是 "", "null", "4"
+        const originalRaw = $("#originalUserId").val(); // 可能 "", "null", "4"
+        const originalUserId = (!originalRaw || originalRaw === "null") ? null : parseInt(originalRaw);
 
-        // 正規化成可比較的值
+        // ✅ 按鈕狀態只看「資料表原始 UserId」
+        if (originalUserId === null) {
+            $("#releaseBtn").prop("disabled", true);  // 無人佔用 → 不能釋出
+        } else {
+            $("#releaseBtn").prop("disabled", false); // 有人佔用（可能是自己）→ 可釋出
+        }
+
+        // 下面這段是 UX：空班畫面自動代入登入者，方便「搶班」
+        let userIdVal = $userInput.val();  // 可能 "", "null", "4"
         const normalized = (userIdVal === "" || userIdVal === "null") ? null : parseInt(userIdVal);
-
-        // ✅ 空班 → 自動帶入目前登入者（只影響畫面與表單送出，不會立刻寫 DB）
         if (normalized === null) {
             $userInput.val(currentUserId);
         }
 
-        // ✅ 他人班 → 鎖定表單（但允許「離開」）
-        if (normalized !== null && normalized !== currentUserId) {
+        // 他人班 → 鎖表單（但仍可關閉）
+        if (originalUserId !== null && originalUserId !== currentUserId) {
             $("#editScheduleForm :input").prop("disabled", true);
             $("#cancelBtn").prop("disabled", false);
         }
     });
 
-        $("#releaseBtn").on("click", function () {
+    // 釋出：送 0（後端會把 0 → null）
+    $("#releaseBtn").on("click", function () {
         $("input[name='UserId']").val(0);
         $("#editScheduleForm").submit();
     });
 
-
-    // ✅ 儲存（空班搶班 / 自己班釋出或維持）
+    // 儲存（搶班 / 釋出 / 維持）
     $("#editScheduleForm").on("submit", function (e) {
         e.preventDefault();
         this.UserId.value = $("input[name='UserId']").val().trim();
@@ -111,9 +132,9 @@
         });
     });
 
-    // ✅ 離開（不改動資料；符合你「離開不改」的規則）
     $("#cancelBtn").on("click", function () {
         $("#addWorkModal").modal("hide");
     });
 </script>
+
 

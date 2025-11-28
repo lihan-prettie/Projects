@@ -11,11 +11,16 @@ namespace Scheduling
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-            builder.Services.AddSession();
-
+            builder.Services.AddSession(options =>
+            {
+                options.IdleTimeout = TimeSpan.FromMinutes(30);
+                options.Cookie.HttpOnly = true;
+                options.Cookie.IsEssential = true;
+            });
             var connectionString = builder.Configuration.GetConnectionString("Scheduling");
             builder.Services.AddDbContext<SchedulingContext>(options => options.UseSqlServer(connectionString));
             builder.Services.AddScoped<WorkAutoGenerateService>();
+            builder.Services.AddHttpContextAccessor();
 
             var app = builder.Build();
 
