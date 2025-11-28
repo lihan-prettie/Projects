@@ -145,6 +145,62 @@
     </div>
 </div>
 
+<!-- 🧭 操作按鈕 -->
+<div class="d-flex justify-content-end mb-3">
+    <button class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#addTripModal">
+        <i class="bi bi-briefcase-fill"></i> 新增出差工作
+    </button>
+    <button class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#editRoleModal">
+        <i class="bi bi-person-gear"></i> 管理員工角色
+    </button>
+</div>
+
+<!-- 🚗 新增出差 Modal -->
+<div class="modal fade" id="addTripModal" tabindex="-1" aria-labelledby="addTripModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="addTripModalLabel"><i class="bi bi-briefcase-fill"></i> 新增出差工作</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <label>出差名稱：</label>
+                <input type="text" id="tripName" class="form-control mb-2">
+                <label>出差地點：</label>
+                <input type="text" id="tripLocation" class="form-control">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-warning" onclick="submitBusinessTrip()">新增</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 👥 修改角色 Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="editRoleModalLabel"><i class="bi bi-person-gear"></i> 修改員工角色</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <select id="userSelect" class="form-select mb-3"></select>
+                <select id="roleSelect" class="form-select">
+                    <option value="1">老闆</option>
+                    <option value="2">主管</option>
+                    <option value="3">員工</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button class="btn btn-warning" onclick="updateUserRole()">更新</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
@@ -152,56 +208,115 @@
     <script src="~/js/calendar-common.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", async function () {
-            initScheduleCalendar("calendar", 1); // 1 = boss
-
-            // 🧮 載入統計資料
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = today.getMonth() + 1;
-            await loadStatistics(year, month);
+        document.addEventListener("DOMContentLoaded", async () => {
+            const calendar = await initScheduleCalendar("calendar", 1); // 老闆
+            loadUserList();
         });
 
-        async function loadStatistics(year, month) {
+        async function submitBusinessTrip() {
+            const name = $("#tripName").val().trim();
+            const loc = $("#tripLocation").val().trim();
+            if (!name) {
+                Swal.fire("請輸入出差名稱", "", "warning");
+                return;
+            }
+
+            const res = await fetch(`/api/ScheduleApi/AddBusinessTrip`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ WorkName: name, WorkLocation: loc })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire("成功", data.message, "success");
+                $("#addTripModal").modal("hide");
+                calendar.refetchEvents();
+            } else {
+                Swal.fire("錯誤", data.message, "error");
+            }
+        }
+
+        async function loadUserList() {
+            const res = await fetch(`/Boss/GetAllUsers`);
+            const users = await res.json();
+            $("#userSelect").empty();
+            users.forEach(u => {
+                $("#userSelect").append(`<option value="${u.userId}">${u.userName} (目前角色：${u.roleId})</option>`);
+            });
+        }
+
+        async function updateUserRole() {
+            const userId = $("#userSelect").val();
+            const roleId = $("#roleSelect").val();
+
+            const res = await fetch(`/Boss/UpdateUserRole`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ UserId: parseInt(userId), RoleId: parseInt(roleId) })
+            });
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire("成功", data.message, "success");
+                $("#editRoleModal").modal("hide");
+            } else {
+                Swal.fire("錯誤", data.message, "error");
+            }
+        }
+
+                    async function loadStatistics(year, month) {
             try {
                 const res = await fetch(`/Boss/GetMonthlyStats?year=${year}&month=${month}`);
-                if (!res.ok) throw new Error("載入統計資料失敗");
                 const data = await res.json();
 
-                // 清空舊內容
+                // 清空舊資料
                 $("#monthlyTable tbody").empty();
                 $("#yearlyTable tbody").empty();
                 $("#rankingList").empty();
 
-                // 依據資料填入表格
+                if (!data || data.length === 0) {
+                    $("#monthlyTable tbody").append(`<tr><td colspan='2'>無資料</td></tr>`);
+                    $("#yearlyTable tbody").append(`<tr><td colspan='2'>無資料</td></tr>`);
+                    $("#rankingList").append(`<li class="list-group-item">無資料</li>`);
+                    return;
+                }
+
+                // 本月與本年統計表格
                 data.forEach(item => {
-                    const name = item.userName || "未指派";
-
                     $("#monthlyTable tbody").append(`
-                        <tr><td>${name}</td><td>${item.monthlyCount}</td></tr>
+                        <tr>
+                            <td>${item.userName}</td>
+                            <td>${item.monthlyCount}</td>
+                        </tr>
                     `);
-
                     $("#yearlyTable tbody").append(`
-                        <tr><td>${name}</td><td>${item.yearlyCount}</td></tr>
+                        <tr>
+                            <td>${item.userName}</td>
+                            <td>${item.yearlyCount}</td>
+                        </tr>
                     `);
                 });
 
-                // 排行榜（依月天數降冪）
-                data.sort((a, b) => b.monthlyCount - a.monthlyCount)
-                    .forEach((item, idx) => {
-                        const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : "";
-                        const rankClass = idx === 0 ? "rank-1" : idx === 1 ? "rank-2" : idx === 2 ? "rank-3" : "";
+                // 排行榜 (依月出勤排序)
+                data
+                    .sort((a, b) => b.monthlyCount - a.monthlyCount)
+                    .forEach((item, index) => {
+                        const rankClass = index === 0 ? "rank-1"
+                            : index === 1 ? "rank-2"
+                            : index === 2 ? "rank-3"
+                            : "";
                         $("#rankingList").append(`
                             <li class="list-group-item d-flex justify-content-between align-items-center ${rankClass}">
-                                ${medal} ${item.userName || "未指派"}
-                                <span class="badge bg-secondary rounded-pill">${item.monthlyCount}天</span>
+                                ${item.userName}
+                                <span class="badge rounded-pill">${item.monthlyCount} 天</span>
                             </li>
                         `);
                     });
-            } catch (err) {
-                console.error(err);
-                Swal.fire("載入失敗", "無法載入統計資料", "error");
+
+            } catch (error) {
+                console.error("載入統計資料失敗：", error);
+                $("#monthlyTable tbody").html(`<tr><td colspan='2' class='text-danger'>載入失敗</td></tr>`);
             }
         }
+
     </script>
 }
