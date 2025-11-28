@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Scheduling.Models;
+using Scheduling.Models.DTOs;
 
 namespace Scheduling.Controllers
 {
@@ -46,29 +47,51 @@ namespace Scheduling.Controllers
 
         // ✅ Boss 新增出差工作
         [HttpPost]
-        public IActionResult AddBusinessTrip([FromBody] Work work)
+        public IActionResult AddBusinessTrip([FromBody] BusinessTripDto model)
         {
             try
             {
-                if (work == null || string.IsNullOrWhiteSpace(work.WorkName))
-                    return BadRequest("資料不完整");
+                // ✅ 把 UTC 轉成台灣時間 (UTC+8)
+                var taipeiZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(model.StartTime.ToUniversalTime(), taipeiZone);
+                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(model.EndTime.ToUniversalTime(), taipeiZone);
 
-                work.WorkType = "BusinessTrip";
-                work.WorkLocation = work.WorkLocation ?? "未指定地點";
-                work.DefaultStartTime = new TimeOnly(9, 0, 0);
-                work.DefaultEndTime = new TimeOnly(18, 0, 0);
-                work.CreateDate = DateTime.Now;
-                work.IsActive = true;
+                var work = new Work
+                {
+                    WorkName = model.WorkName,
+                    WorkLocation = model.WorkLocation,
+                    WorkType = "BusinessTrip",
+                    WorkNote = model.WorkNote,
+                    DefaultStartTime = TimeOnly.FromDateTime(startLocal),
+                    DefaultEndTime = TimeOnly.FromDateTime(endLocal),
+                    CreateDate = DateTime.Now,
+                    IsActive = true
+                };
+
                 _context.Works.Add(work);
                 _context.SaveChanges();
 
-                return Ok(new { success = true, message = "出差工作已新增" });
+                var schedule = new Schedule
+                {
+                    WorkId = work.WorkId,
+                    StartTime = startLocal,
+                    EndTime = endLocal,
+                    WorkDate = DateOnly.FromDateTime(startLocal),
+                    IsActive = true
+                };
+
+                _context.Schedules.Add(schedule);
+                _context.SaveChanges();
+
+                return Ok(new { success = true, message = "出差工作與排班已新增" });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+
+
 
         [HttpGet]
         public IActionResult GetSchedulesByUser(int userId)
