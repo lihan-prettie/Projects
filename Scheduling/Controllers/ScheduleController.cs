@@ -133,7 +133,7 @@ namespace Scheduling.Controllers
                     schedule.Status = "Active";
                     schedule.UpdatedBy = currentUserId;
                     _context.SaveChanges();
-                    return Json(new { success = true, message = "搶班成功" });
+                    return Json(new { success = true, message = "排班成功" });
                 }
 
                 // 🟡 若送來 0 → 保持空

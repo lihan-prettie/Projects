@@ -46,16 +46,27 @@ namespace Scheduling.Controllers
         }
 
         // ✅ Boss 新增出差工作
+        // ✅ Boss 新增出差工作
         [HttpPost]
         public IActionResult AddBusinessTrip([FromBody] BusinessTripDto model)
         {
             try
             {
-                // ✅ 把 UTC 轉成台灣時間 (UTC+8)
-                var taipeiZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
-                var startLocal = TimeZoneInfo.ConvertTimeFromUtc(model.StartTime.ToUniversalTime(), taipeiZone);
-                var endLocal = TimeZoneInfo.ConvertTimeFromUtc(model.EndTime.ToUniversalTime(), taipeiZone);
+                // 檢查時間是否有效
+                if (model.StartTime == DateTime.MinValue || model.EndTime == DateTime.MinValue)
+                {
+                    return BadRequest(new { success = false, message = "時間格式錯誤，請確認前端是否正確傳入時間。" });
+                }
 
+                // ✅ 統一轉成台北時間
+                var taipeiZone = TimeZoneInfo.FindSystemTimeZoneById("Taipei Standard Time");
+                var startLocal = TimeZoneInfo.ConvertTime(model.StartTime, taipeiZone);
+                var endLocal = TimeZoneInfo.ConvertTime(model.EndTime, taipeiZone);
+
+                // ✅ 確保日期正確
+                var workDate = DateOnly.FromDateTime(startLocal);
+
+                // ✅ 建立 Work
                 var work = new Work
                 {
                     WorkName = model.WorkName,
@@ -71,27 +82,38 @@ namespace Scheduling.Controllers
                 _context.Works.Add(work);
                 _context.SaveChanges();
 
+                // ✅ 建立 Schedule - 修正重點：必須同時設定 ScheduleDate 和 WorkDate
                 var schedule = new Schedule
                 {
                     WorkId = work.WorkId,
+                    UserId = null, // 出差工作不指定特定員工
                     StartTime = startLocal,
                     EndTime = endLocal,
-                    WorkDate = DateOnly.FromDateTime(startLocal),
+                    ScheduleDate = workDate, // ⚠️ 關鍵：必須設定 ScheduleDate
+                    WorkDate = workDate,     // ⚠️ 關鍵：必須設定 WorkDate
                     IsActive = true
                 };
 
                 _context.Schedules.Add(schedule);
                 _context.SaveChanges();
 
-                return Ok(new { success = true, message = "出差工作與排班已新增" });
+                return Ok(new
+                {
+                    success = true,
+                    message = "出差工作與排班已新增",
+                    workDate = workDate.ToString("yyyy-MM-dd")
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { success = false, message = ex.Message });
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = ex.Message,
+                    detail = ex.InnerException?.Message
+                });
             }
         }
-
-
 
         [HttpGet]
         public IActionResult GetSchedulesByUser(int userId)
