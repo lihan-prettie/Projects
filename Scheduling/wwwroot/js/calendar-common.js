@@ -178,7 +178,13 @@
             } else {
                 info.el.title = `${info.event.title} (${startTime ?? ""} ~ ${endTime ?? ""})`;
             }
-        }
+        },
+        datesSet: async (info) => {
+            const year = info.start.getFullYear();
+            const month = info.start.getMonth() + 1;
+            await loadStatistics(year, month);
+        },
+
     });
 
     calendar.render();

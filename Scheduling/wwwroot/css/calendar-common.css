@@ -239,3 +239,16 @@ body {
         color: #fff8dc !important;
     }
 
+#rankingList li {
+    font-weight: 500;
+    background-color: #fffdf5;
+}
+
+#monthlyTable, #yearlyTable {
+    font-size: 0.95rem;
+}
+
+.card-header {
+    font-weight: bold;
+    text-align: center;
+}
