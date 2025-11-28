@@ -52,5 +52,19 @@ namespace Scheduling.Controllers
             };
             return Json(new { success = true, redirectUrl });
         }
+
+        // ✅ 登出功能（Logout Action）
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Logout()
+        {
+            // 清除使用者的 Session
+            HttpContext.Session.Clear();
+
+            // 可選：顯示提示訊息或導向登入頁
+            TempData["LogoutMessage"] = "您已成功登出。";
+
+            return RedirectToAction("Index", "Home");
+        }
     }
 }

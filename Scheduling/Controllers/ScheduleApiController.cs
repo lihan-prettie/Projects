@@ -16,33 +16,80 @@ namespace Scheduling.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetSchedules()
+        public IActionResult GetSchedules()
         {
-            int? currentUserId = HttpContext.Session.GetInt32("UserId");
-
-            var schedules = await _context.Schedules
-                .Include(s => s.Work)
-                .ToListAsync();
-
-            var events = schedules.Select(s => new
-            {
-                id = s.ScheduleId,
-                title = s.Work.WorkName,
-                start = s.ScheduleDate.ToString("yyyy-MM-dd"),
-                color =
-                    s.UserId == null ? "#B0B0B0" :                        // 灰色 → 無人
-                    s.UserId == currentUserId ? "#FF7043" : "#FFD54F",    // 橘紅 / 黃
-                extendedProps = new
+            var data = _context.Schedules
+                .Where(s => s.IsActive)
+                .Select(s => new
                 {
-                    userId = s.UserId,
-                    workId = s.WorkId,
-                    status = s.Status,
-                    startTime = s.StartTime.ToString("HH:mm"),
-                    endTime = s.EndTime.ToString("HH:mm")
-                }
+                    s.ScheduleId,
+                    s.UserId,
+                    s.StartTime,
+                    s.EndTime,
+                    s.Work.WorkName,
+                    s.User.UserName
+                })
+                .ToList();
+
+            // 🔁 讓 StartTime / EndTime 保證是 ISO 格式字串
+            var formatted = data.Select(x => new
+            {
+                x.ScheduleId,
+                x.UserId,
+                x.WorkName,
+                x.UserName,
+                startTime = x.StartTime.ToString("yyyy-MM-ddTHH:mm:ss"),
+                endTime = x.EndTime.ToString("yyyy-MM-ddTHH:mm:ss")
             });
 
-            return Ok(events);
+            return Ok(formatted);
+        }
+
+
+        // ✅ 員工：依使用者ID取得自己的班表
+        [HttpGet]
+        public IActionResult GetSchedulesByUser(int userId)
+        {
+            if (userId <= 0)
+                return BadRequest("UserId 不正確");
+
+            var data = _context.Schedules
+                .Where(s => s.UserId == userId && s.IsActive)
+                .Select(s => new
+                {
+                    s.ScheduleId,
+                    s.UserId,
+                    s.StartTime,
+                    s.EndTime,
+                    WorkName = s.Work.WorkName
+                })
+                .ToList();
+
+            if (!data.Any())
+                return NotFound("找不到排班資料");
+
+            return Ok(data);
+        }
+
+        // ✅ 管理者：顯示所有一般工作與出差班表
+        [HttpGet]
+        public IActionResult GetSchedulesByRole(int role)
+        {
+            // role 可用於未來進階分層 (目前可忽略)
+            var data = _context.Schedules
+                .Where(s => s.IsActive)
+                .Select(s => new
+                {
+                    s.ScheduleId,
+                    s.UserId,
+                    s.StartTime,
+                    s.EndTime,
+                    WorkName = s.Work.WorkName,
+                    UserName = s.User.UserName
+                })
+                .ToList();
+
+            return Ok(data);
         }
 
     }

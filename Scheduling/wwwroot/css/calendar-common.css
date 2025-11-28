@@ -5,6 +5,7 @@ body {
     font-family: 'Microsoft JhengHei', sans-serif;
 }
 
+
 #calendar {
     background-color: #fff; /* 日曆白底 */
     border: 3px solid #ffd700; /* 金黃色邊框 */
@@ -71,4 +72,133 @@ body {
     justify-content: center;
 }
 
+/* ===== ListMonth 橘黃色主題 ===== */
+.fc-listMonth-view {
+    background-color: #fff8dc; /* 柔和底色 */
+    border-radius: 10px;
+    padding: 10px;
+}
+
+/* 日期區塊（例如 2025年12月1日） */
+.fc-list-day-cushion {
+    background-color: #fffbcc !important; /* 主色淺黃 */
+    color: #fff8dc !important; /* 淡黃色字 */
+    font-weight: 700;
+    font-size: 1.1rem;
+    text-align: center;
+    border-radius: 8px;
+    padding: 6px 0;
+}
+
+/* 星期標籤（例如 星期一） */
+.fc-list-day-side-text {
+    color: #fffde7 !important;
+    font-weight: 600;
+}
+
+/* 每一列事件 */
+.fc-list-event {
+    background-color: #fff;
+    border-left: 6px solid transparent;
+    border-radius: 6px;
+    margin: 4px 0;
+    transition: all 0.2s ease-in-out;
+}
+
+    /* hover 效果 */
+    .fc-list-event:hover {
+        transform: scale(1.01);
+        box-shadow: 0 0 10px rgba(255, 193, 7, 0.4);
+    }
+
+/* 時間欄 */
+.fc-list-event-time {
+    color: #b8860b;
+    font-weight: 600;
+}
+
+/* 事件標題樣式 */
+.fc-list-event-title {
+    font-weight: 600;
+    color: #444;
+}
+
+/* 隱藏小圓點 */
+.fc-list-event-dot {
+    display: none;
+}
+
+/* 🩶 空班 (灰色) */
+.fc-event[style*="#B0B0B0"] .fc-list-event-title {
+    background-color: #e0e0e0;
+    color: #555;
+    border-radius: 4px;
+    padding: 3px 6px;
+}
+
+/* 💛 他人班 (黃色) */
+.fc-event[style*="#FFD54F"] .fc-list-event-title {
+    background-color: #fff59d;
+    color: #8b6b00;
+    border-radius: 4px;
+    padding: 3px 6px;
+}
+
+/* 🧡 自己班 (橘紅) */
+.fc-event[style*="#FF7043"] .fc-list-event-title {
+    background-color: #ffb74d;
+    color: #7a2c0c;
+    border-radius: 4px;
+    padding: 3px 6px;
+}
+
+/* ✅ 統一所有日期格的高度 */
+.fc-daygrid-day-frame {
+    position: relative !important;
+    min-height: 100px !important; /* 視覺高度固定，可依需求調整 */
+    overflow: hidden !important;
+}
+
+    /* ✅ 節日名稱絕對固定在格底，不影響高度 */
+    .fc-daygrid-day-frame .holiday-label {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        font-size: 1rem;
+        color: #b8860b;
+        font-weight: 600;
+        pointer-events: none;
+        background-color: transparent;
+    }
+
+
+/* 無事件時顯示 */
+.fc-list-empty {
+    background-color: #fffde7;
+    color: #b8860b;
+    font-weight: 600;
+    border: 1px dashed #ffd54f;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+/* ===== 標題列與按鈕配色統一 ===== */
+.fc-toolbar-title {
+    color: #b8860b !important;
+    font-weight: 700;
+}
+
+.fc-button {
+    background-color: #ffeb3b !important;
+    border: 1px solid #ffd54f !important;
+    color: #b8860b !important;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+    .fc-button:hover {
+        background-color: #ffa500 !important;
+        color: #fff8dc !important;
+    }
 

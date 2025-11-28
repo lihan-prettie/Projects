@@ -71,10 +71,12 @@ public partial class SchedulingContext : DbContext
 
             entity.ToTable("Schedule");
 
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Note).HasMaxLength(255);
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValue("active");
+            entity.Property(e => e.WorkDate).HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.CreatedByNavigation).WithMany(p => p.ScheduleCreatedByNavigations)
                 .HasForeignKey(d => d.CreatedBy)
@@ -124,6 +126,8 @@ public partial class SchedulingContext : DbContext
 
             entity.ToTable("Work");
 
+            entity.Property(e => e.DefaultEndTime).HasDefaultValue(new TimeOnly(18, 0, 0));
+            entity.Property(e => e.DefaultStartTime).HasDefaultValue(new TimeOnly(9, 0, 0));
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.WorkLocation).HasMaxLength(100);
             entity.Property(e => e.WorkName)
