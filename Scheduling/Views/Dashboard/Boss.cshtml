@@ -136,7 +136,7 @@
         <!-- 排行榜 -->
         <div class="col-md-4">
             <div class="card mb-3">
-                <div class="card-header">本月上班排行榜 🏆</div>
+                <div class="card-header">本月上班排行榜</div>
                 <div class="card-body">
                     <ol id="rankingList" class="list-group list-group-numbered"></ol>
                 </div>
@@ -231,10 +231,20 @@
     <script src="~/js/calendar-common.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
+                document.addEventListener("DOMContentLoaded", async () => {
             const calendar = await initScheduleCalendar("calendar", 1); // 老闆
             loadUserList();
+
+            const today = new Date();
+            await loadStatistics(today.getFullYear(), today.getMonth() + 1);
+
+            // 📅 切換月份時重新載入統計
+            calendar.on('datesSet', async (info) => {
+                const viewDate = info.view.currentStart;
+                await loadStatistics(viewDate.getFullYear(), viewDate.getMonth() + 1);
+            });
         });
+
 
                 async function submitBusinessTrip() {
             const name = $("#tripName").val().trim();
@@ -266,12 +276,15 @@
 
             const data = await res.json();
             if (data.success) {
-                Swal.fire("成功", data.message, "success");
-                $("#addTripModal").modal("hide");
-                calendar.refetchEvents();
-            } else {
-                Swal.fire("錯誤", data.message, "error");
-            }
+            Swal.fire("成功", data.message, "success");
+            $("#addTripModal").modal("hide");
+            calendar.refetchEvents();
+
+            // 📊 重新載入統計資料
+            const date = new Date($("#tripDate").val());
+            await loadStatistics(date.getFullYear(), date.getMonth() + 1);
+        }
+
         }
 
 
