@@ -152,6 +152,43 @@ body {
     padding: 3px 6px;
 }
 
+/* 讓事件撐滿整個日期格寬度 */
+.fc-daygrid-event {
+    width: 100% !important;
+    display: block !important;
+}
+
+    /* 讓事件背景貼齊左右邊界 */
+    .fc-daygrid-event .fc-custom-event {
+        width: 100%;
+        box-sizing: border-box;
+        display: block;
+    }
+
+/* 移除 dot 模式的 margin 與圓點 */
+.fc-daygrid-dot-event {
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+    .fc-daygrid-dot-event .fc-event-dot {
+        display: none !important;
+    }
+
+.fc-daygrid-day-events {
+    display: flex;
+    flex-direction: column;
+    gap: 2px; /* 每筆事件間距 */
+}
+
+.fc-custom-event {
+    border-radius: 6px;
+    padding: 2px 4px;
+    color: white;
+    text-align: left;
+}
+
+
 /* ✅ 統一所有日期格的高度 */
 .fc-daygrid-day-frame {
     position: relative !important;
@@ -202,3 +239,16 @@ body {
         color: #fff8dc !important;
     }
 
+#rankingList li {
+    font-weight: 500;
+    background-color: #fffdf5;
+}
+
+#monthlyTable, #yearlyTable {
+    font-size: 0.95rem;
+}
+
+.card-header {
+    font-weight: bold;
+    text-align: center;
+}

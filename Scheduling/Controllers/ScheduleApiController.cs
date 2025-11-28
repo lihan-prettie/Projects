@@ -31,7 +31,6 @@ namespace Scheduling.Controllers
                 })
                 .ToList();
 
-            // 🔁 讓 StartTime / EndTime 保證是 ISO 格式字串
             var formatted = data.Select(x => new
             {
                 x.ScheduleId,
@@ -45,8 +44,32 @@ namespace Scheduling.Controllers
             return Ok(formatted);
         }
 
+        // ✅ Boss 新增出差工作
+        [HttpPost]
+        public IActionResult AddBusinessTrip([FromBody] Work work)
+        {
+            try
+            {
+                if (work == null || string.IsNullOrWhiteSpace(work.WorkName))
+                    return BadRequest("資料不完整");
 
-        // ✅ 員工：依使用者ID取得自己的班表
+                work.WorkType = "BusinessTrip";
+                work.WorkLocation = work.WorkLocation ?? "未指定地點";
+                work.DefaultStartTime = new TimeOnly(9, 0, 0);
+                work.DefaultEndTime = new TimeOnly(18, 0, 0);
+                work.CreateDate = DateTime.Now;
+                work.IsActive = true;
+                _context.Works.Add(work);
+                _context.SaveChanges();
+
+                return Ok(new { success = true, message = "出差工作已新增" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
         [HttpGet]
         public IActionResult GetSchedulesByUser(int userId)
         {
@@ -71,11 +94,9 @@ namespace Scheduling.Controllers
             return Ok(data);
         }
 
-        // ✅ 管理者：顯示所有一般工作與出差班表
         [HttpGet]
         public IActionResult GetSchedulesByRole(int role)
         {
-            // role 可用於未來進階分層 (目前可忽略)
             var data = _context.Schedules
                 .Where(s => s.IsActive)
                 .Select(s => new
@@ -91,6 +112,5 @@ namespace Scheduling.Controllers
 
             return Ok(data);
         }
-
     }
 }

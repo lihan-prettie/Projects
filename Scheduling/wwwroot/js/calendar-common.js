@@ -104,7 +104,13 @@
                 });
                 return;
             }
-
+            // 🚫 Manager 以外角色禁止預約出差
+            if (info.event.extendedProps.workName?.includes("出差")) {
+                if (role !== 2) {
+                    Swal.fire("無法預約", "只有主管可預約出差班別", "warning");
+                    return;
+                }
+            }
             // 👩‍💻 其他角色可以編輯
             const scheduleId = info.event.id || info.event.extendedProps.scheduleId;
             if (!scheduleId) {
@@ -178,7 +184,15 @@
             } else {
                 info.el.title = `${info.event.title} (${startTime ?? ""} ~ ${endTime ?? ""})`;
             }
-        }
+        },
+        datesSet: async (info) => {
+            const year = info.start.getFullYear();
+            const month = info.start.getMonth() + 1;
+            if (typeof loadStatistics === "function") {
+                await loadStatistics(year, month);
+            }
+        },
+
     });
 
     calendar.render();
@@ -196,114 +210,6 @@ function getColorByUser(userId) {
 function getColorByUser(userId) {
     const palette = ["#007083", "#f5b301", "#7b68ee", "#ff6347", "#3cb371", "#20b2aa"];
     return palette[userId % palette.length];
-}
-
-// 🧠 Boss 專用統計載入
-// 🧠 Boss 專用統計載入 + 排行榜
-async function loadBossStatistics(year, month) {
-    const res = await fetch(`/Boss/GetMonthlyStats?year=${year}&month=${month}`);
-    const data = await res.json();
-
-    // 移除舊容器（避免重複載入）
-    const existing = document.getElementById("boss-stats-container");
-    if (existing) existing.remove();
-
-    // === 統計表格區 ===
-    const container = document.createElement("div");
-    container.id = "boss-stats-container";
-    container.classList.add("container", "mt-4");
-
-    container.innerHTML = `
-        <div class="row">
-            <div class="col-md-6">
-                <h4 class="mb-3">📊 員工出勤統計 (${year}年${month}月)</h4>
-                <table class="table table-bordered table-hover align-middle shadow-sm">
-                    <thead class="table-warning">
-                        <tr>
-                            <th>排名</th>
-                            <th>員工</th>
-                            <th>本月上班天數</th>
-                            <th>本年上班天數</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.map((x, i) => `
-                            <tr>
-                                <td>${i + 1}</td>
-                                <td>${x.userName}</td>
-                                <td>${x.monthlyCount}</td>
-                                <td>${x.yearlyCount}</td>
-                            </tr>
-                        `).join("")}
-                    </tbody>
-                </table>
-            </div>
-            <div class="col-md-6 d-flex flex-column align-items-center justify-content-center">
-                <h5 class="text-center mb-3">🏆 本月出勤排行榜</h5>
-                <canvas id="bossChart" style="max-height:350px; width:100%;"></canvas>
-            </div>
-        </div>
-    `;
-
-    document.querySelector("#calendar").after(container);
-
-    // === 繪製 Chart.js 長條圖 ===
-    const ctx = document.getElementById("bossChart").getContext("2d");
-
-    // 取前10名（或全部）
-    const labels = data.map(x => x.userName);
-    const monthlyCounts = data.map(x => x.monthlyCount);
-
-    const chartColors = [
-        "#f5b301", "#ff9800", "#ffc107", "#ffb74d", "#ffcc80",
-        "#20b2aa", "#7b68ee", "#007083", "#3cb371", "#ff6347"
-    ];
-
-    new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: "上班天數",
-                data: monthlyCounts,
-                backgroundColor: chartColors.slice(0, labels.length),
-                borderRadius: 8
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (ctx) => `${ctx.parsed.y} 天`
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    ticks: {
-                        font: { size: 14 },
-                        color: "#6c757d"
-                    },
-                    grid: { display: false }
-                },
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        stepSize: 2,
-                        font: { size: 12 },
-                        color: "#6c757d"
-                    },
-                    title: {
-                        display: true,
-                        text: "天數",
-                        color: "#6c757d"
-                    }
-                }
-            }
-        }
-    });
 }
 
 

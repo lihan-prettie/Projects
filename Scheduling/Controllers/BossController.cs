@@ -10,7 +10,6 @@ namespace Scheduling.Controllers
         private readonly ScheduleService _scheduleService;
         private readonly SchedulingContext _context;
 
-
         public BossController(ScheduleService scheduleService, SchedulingContext context)
         {
             _scheduleService = scheduleService;
@@ -34,14 +33,13 @@ namespace Scheduling.Controllers
                     s.UserId,
                     s.StartTime,
                     s.EndTime,
-                    WorkName = s.Work.WorkName,       // ✅ 加這行
+                    WorkName = s.Work.WorkName,
                     UserName = s.User != null ? s.User.UserName : null
                 })
                 .ToList();
 
             return Ok(data);
         }
-
 
         // ✅ Boss 統計資料
         [HttpGet]
@@ -51,28 +49,32 @@ namespace Scheduling.Controllers
             return Json(data);
         }
 
-        [HttpGet]
-        public IActionResult GetPeopleByWork(int scheduleId)
+        // ✅ Boss 修改使用者角色
+        [HttpPost]
+        public IActionResult UpdateUserRole([FromBody] User updateModel)
         {
-            var workId = _context.Schedules
-                .Where(s => s.ScheduleId == scheduleId)
-                .Select(s => s.WorkId)
-                .FirstOrDefault();
+            if (updateModel == null || updateModel.UserId <= 0)
+                return BadRequest("無效的使用者資料");
 
-            if (workId == 0)
-                return Json(new { message = "找不到對應工作" });
+            var user = _context.Users.FirstOrDefault(u => u.UserId == updateModel.UserId);
+            if (user == null) return NotFound("找不到使用者");
 
-            var people = _context.Schedules
-                .Where(s => s.WorkId == workId && s.IsActive)
-                .Select(s => new
-                {
-                    s.UserId,
-                    UserName = s.User.UserName
-                })
+            user.RoleId = updateModel.RoleId;
+            user.UpdateDate = DateTime.Now;
+            _context.SaveChanges();
+
+            return Ok(new { success = true, message = "角色更新成功" });
+        }
+
+        // ✅ Boss 查詢員工清單（給修改角色用）
+        [HttpGet]
+        public IActionResult GetAllUsers()
+        {
+            var users = _context.Users
+                .Select(u => new { u.UserId, u.UserName, u.RoleId })
                 .ToList();
 
-            return Json(people);
+            return Ok(users);
         }
-        
     }
 }
