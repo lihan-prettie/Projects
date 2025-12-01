@@ -211,10 +211,11 @@
             </div>
             <div class="modal-body">
                 <select id="userSelect" class="form-select mb-3"></select>
+
                 <select id="roleSelect" class="form-select">
-                    <option value="1">老闆</option>
-                    <option value="2">主管</option>
-                    <option value="3">員工</option>
+                    <option value="1">改為老闆</option>
+                    <option value="2">改為主管</option>
+                    <option value="3">改為員工</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -370,14 +371,34 @@
 
         }
 
-        async function loadUserList() {
+            async function loadUserList() {
             const res = await fetch(`/Boss/GetAllUsers`);
             const users = await res.json();
             $("#userSelect").empty();
+
             users.forEach(u => {
-                $("#userSelect").append(`<option value="${u.userId}">${u.userName} (目前角色：${u.roleId})</option>`);
+                let roleName = "";
+                switch (u.roleId) {
+                    case 1:
+                        roleName = "老闆";
+                        break;
+                    case 2:
+                        roleName = "主管";
+                        break;
+                    case 3:
+                        roleName = "員工";
+                        break;
+                    default:
+                        roleName = "未知角色";
+                        break;
+                }
+
+                $("#userSelect").append(
+                    `<option value="${u.userId}">${u.userName}（目前角色：${roleName}）</option>`
+                );
             });
         }
+
 
         async function updateUserRole() {
             const userId = $("#userSelect").val();
