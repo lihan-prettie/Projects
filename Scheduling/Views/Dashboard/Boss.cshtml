@@ -90,6 +90,7 @@
         }
     </style>
 }
+<input type="hidden" id="currentUserId" value="@ViewData["UserId"]" />
 
 <div id="calendar"></div>
 
@@ -232,29 +233,64 @@
 
     <script>
             document.addEventListener("DOMContentLoaded", async () => {
-            const calendar = await initScheduleCalendar("calendar", 1); // 老闆
-            loadUserList();
+             // ✅ 檢查 FullCalendar 是否已載入
+            if (typeof FullCalendar === 'undefined') {
+                console.error('FullCalendar 尚未載入');
+                return;
+            }
+            // ✅ 確認 DOM 元素存在
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) {
+                console.error('找不到 calendar 元素');
+                return;
+            }
+            try {
+                const calendar = await initScheduleCalendar("calendar", 1);
 
-            const today = new Date();
-            await loadStatistics(today.getFullYear(), today.getMonth() + 1);
+                        if (!calendar) {
+                console.group("❌ Calendar 初始化失敗偵錯");
+                if (typeof FullCalendar === "undefined") {
+                    console.error("原因：FullCalendar 未正確載入 (可能 CDN 錯誤或未引入 JS)");
+                } else if (!document.getElementById("calendar")) {
+                    console.error("原因：找不到 #calendar 容器元素，請確認 Boss.cshtml 有 <div id='calendar'>");
+                } else {
+                    console.error("原因：initScheduleCalendar() 回傳 null，可能是內部發生例外");
+                    console.info("➡ 請檢查 console 是否有出現 '❌ initScheduleCalendar 發生錯誤'");
+                    console.info("➡ 或查看 /Boss/GetAllSchedules 是否回傳 500 / 空集合");
+                }
+                console.groupEnd();
+                return;
+            }
 
-            // 📅 切換月份時重新載入統計
+                console.log('Calendar 初始化成功');
+
+                loadUserList();
+
+                const today = new Date();
+                await loadStatistics(today.getFullYear(), today.getMonth() + 1);
+
+                // ✅ 使用 on 方法監聽 datesSet 事件
             calendar.on('datesSet', async (info) => {
+                console.log('datesSet 觸發:', info.view.currentStart);
                 const viewDate = info.view.currentStart;
                 await loadStatistics(viewDate.getFullYear(), viewDate.getMonth() + 1);
             });
 
-            // ✅ 設定出差日期最小值為明天
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const minDate = tomorrow.toISOString().split('T')[0];
-            document.getElementById('tripDate').setAttribute('min', minDate);
+                // ✅ 設定出差日期最小值為明天
+                const tomorrow = new Date();
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                const minDate = tomorrow.toISOString().split('T')[0];
+                document.getElementById('tripDate').setAttribute('min', minDate);
 
-            // ✅ Modal 開啟時清空表單
-            const addTripModal = document.getElementById('addTripModal');
-            addTripModal.addEventListener('show.bs.modal', function () {
-                clearTripForm();
-            });
+                // ✅ Modal 開啟時清空表單
+                const addTripModal = document.getElementById('addTripModal');
+                addTripModal.addEventListener('show.bs.modal', function () {
+                    clearTripForm();
+                });
+
+            } catch (error) {
+                console.error('Calendar 初始化過程發生錯誤:', error);
+            }
         });
 
         // ✅ 清空出差表單的函數
@@ -307,17 +343,31 @@
                 })
             });
 
+            // const data = await res.json();
+            // if (data.success) {
+            //     Swal.fire("成功", data.message, "success");
+            //     $("#addTripModal").modal("hide");
+            //     clearTripForm(); ✅ 成功後清空表單
+            //     calendar.refetchEvents();
+            //     const currentDate = calendar.getDate(); 取得日曆當前顯示的日期
+            //     await loadStatistics(currentDate.getFullYear(), currentDate.getMonth() + 1);
+            // } else {
+            //     Swal.fire("錯誤", data.message, "error");
+            // }
             const data = await res.json();
             if (data.success) {
                 Swal.fire("成功", data.message, "success");
                 $("#addTripModal").modal("hide");
-                clearTripForm(); // ✅ 成功後清空表單
-                calendar.refetchEvents();
-                const currentDate = calendar.getDate(); // 取得日曆當前顯示的日期
-                await loadStatistics(currentDate.getFullYear(), currentDate.getMonth() + 1);
+                clearTripForm();
+
+                // ✅ 使用全域的 calendar 變數重新載入事件
+                if (window.calendar) {
+                    window.calendar.refetchEvents();
+                }
             } else {
                 Swal.fire("錯誤", data.message, "error");
             }
+
         }
 
         async function loadUserList() {
@@ -401,5 +451,8 @@
                 $("#monthlyTable tbody").html(`<tr><td colspan='2' class='text-danger'>載入失敗</td></tr>`);
             }
         }
+            $(document).on('show.bs.modal hidden.bs.modal', function () {
+            document.body.style.paddingRight = '0px';
+        });
     </script>
 }

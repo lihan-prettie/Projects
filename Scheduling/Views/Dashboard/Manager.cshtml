@@ -20,9 +20,13 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="~/js/calendar-common.js"></script>
     <script>
-        let calendar;
-        document.addEventListener("DOMContentLoaded", function() {
-            initScheduleCalendar("calendar", 2); // 2 = manager
+        document.addEventListener("DOMContentLoaded", async function() {
+            // ✅ 一定要用 await 取得真正的 Calendar 物件
+            window.calendar = await initScheduleCalendar("calendar", 2);
+            console.log("window.calendar 已建立:", window.calendar);
+        });
+            $(document).on('show.bs.modal hidden.bs.modal', function () {
+            document.body.style.paddingRight = '0px';
         });
     </script>
 }

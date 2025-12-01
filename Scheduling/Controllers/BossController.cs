@@ -18,15 +18,28 @@ namespace Scheduling.Controllers
 
         public IActionResult Index()
         {
+            // ✅ 設定 UserId
+            ViewData["UserId"] = HttpContext.Session.GetInt32("UserId") ?? 0;
             return View();
         }
 
-        // ✅ Boss 日曆資料來源
+        // ✅ Boss 日曆資料來源 - 改用日期範圍查詢
         [HttpGet]
-        public IActionResult GetAllSchedules(int year)
+        public IActionResult GetAllSchedules(DateTime? start, DateTime? end)
         {
+            // 如果沒有傳入日期範圍，預設查詢當前年份
+            if (!start.HasValue || !end.HasValue)
+            {
+                int currentYear = DateTime.Now.Year;
+                start = new DateTime(currentYear, 1, 1);
+                end = new DateTime(currentYear, 12, 31, 23, 59, 59);
+            }
+
+            var startLocal = start.Value.ToLocalTime();
+            var endLocal = end.Value.ToLocalTime();
+
             var data = _context.Schedules
-                .Where(s => s.StartTime.Year == year && s.IsActive)
+                .Where(s => s.StartTime >= startLocal && s.StartTime <= endLocal && s.IsActive)
                 .Select(s => new
                 {
                     s.ScheduleId,
@@ -38,8 +51,35 @@ namespace Scheduling.Controllers
                 })
                 .ToList();
 
+
             return Ok(data);
         }
+
+
+        //public IActionResult GetAllSchedules(DateTime? start, DateTime? end)
+        //{
+        //    // ✅ 修正：改用 && (AND) 邏輯，兩個參數都為空才用預設值
+        //    if (!start.HasValue && !end.HasValue)
+        //    {
+        //        int currentYear = DateTime.Now.Year;
+        //        start = new DateTime(currentYear, 1, 1);
+        //        end = new DateTime(currentYear, 12, 31, 23, 59, 59);
+        //    }
+
+        //    var data = _context.Schedules
+        //        .Where(s => s.StartTime >= start && s.StartTime <= end && s.IsActive)
+        //        .Select(s => new {
+        //            s.ScheduleId,
+        //            s.UserId,
+        //            s.StartTime,
+        //            s.EndTime,
+        //            WorkName = s.Work.WorkName,
+        //            UserName = s.User != null ? s.User.UserName : null
+        //        }).ToList();
+
+        //    return Ok(data);
+        //}
+
 
         // ✅ Boss 統計資料
         [HttpGet]
