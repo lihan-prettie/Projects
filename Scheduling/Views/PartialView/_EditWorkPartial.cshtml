@@ -1,4 +1,7 @@
 ﻿@model Scheduling.Models.ViewModels.EditScheduleViewModel
+@{
+    bool isReadonly = (Context.Request.Query["readonly"] == "true");
+}
 
 <style>
     .readonly-box input, .readonly-box textarea {
@@ -75,7 +78,7 @@
             <input type="text" class="form-control" name="UserId" value="@Model.UserId" />
         </div>
 
-        @if (Model.IsEditable)
+        @if (!isReadonly && Model.IsEditable)
         {
             <div class="d-flex justify-content-end">
                 <button type="button" id="releaseBtn" class="btn btn-outline-danger me-2">釋出班表</button>
@@ -85,11 +88,12 @@
         }
         else
         {
-            <div class="text-center text-muted fw-bold">此班已被他人預定，僅供查看</div>
+            <div class="text-center text-muted fw-bold">此班僅供查看</div>
             <div class="d-flex justify-content-end mt-3">
                 <button type="button" id="cancelBtn" class="btn btn-secondary">離開</button>
             </div>
         }
+
     </form>
 </div>
 <script>
@@ -99,25 +103,31 @@
     }
 
     $(function () {
-        const $userInput = $("input[name='UserId']");
-        const originalRaw = $("#originalUserId").val(); // 可能 "", "null", "4"
-        const originalUserId = (!originalRaw || originalRaw === "null") ? null : parseInt(originalRaw);
+        const isReadonly = "@Context.Request.Query["readonly"]" === "true";
 
-        // ✅ 按鈕狀態只看「資料表原始 UserId」
-        if (originalUserId === null) {
-            $("#releaseBtn").prop("disabled", true);  // 無人佔用 → 不能釋出
-        } else {
-            $("#releaseBtn").prop("disabled", false); // 有人佔用（可能是自己）→ 可釋出
+        if (isReadonly) {
+            console.log("🔒 唯讀模式：鎖定所有輸入");
+            $("#editScheduleForm :input").prop("disabled", true);
+            $("#cancelBtn").prop("disabled", false); // 仍允許關閉
+            $(".modal-title").text("班表資訊（僅供查看）");
         }
 
-        // 下面這段是 UX：空班畫面自動代入登入者，方便「搶班」
-        let userIdVal = $userInput.val();  // 可能 "", "null", "4"
+        const $userInput = $("input[name='UserId']");
+        const originalRaw = $("#originalUserId").val();
+        const originalUserId = (!originalRaw || originalRaw === "null") ? null : parseInt(originalRaw);
+
+        if (originalUserId === null) {
+            $("#releaseBtn").prop("disabled", true);
+        } else {
+            $("#releaseBtn").prop("disabled", false);
+        }
+
+        let userIdVal = $userInput.val();
         const normalized = (userIdVal === "" || userIdVal === "null") ? null : parseInt(userIdVal);
         if (normalized === null) {
             $userInput.val(currentUserId);
         }
 
-        // 他人班 → 鎖表單（但仍可關閉）
         if (originalUserId !== null && originalUserId !== currentUserId) {
             $("#editScheduleForm :input").prop("disabled", true);
             $("#cancelBtn").prop("disabled", false);
@@ -128,6 +138,7 @@
     $("#releaseBtn").on("click", function () {
         $("input[name='UserId']").val(0);
         $("#editScheduleForm").submit();
+        $("body").removeClass("modal-open").css({ "overflow": "", "padding-right": "" });
     });
 
     // 儲存（搶班 / 釋出 / 維持）
@@ -137,16 +148,38 @@
         $.post("/Schedule/UpdateSchedule", $(this).serialize(), function (res) {
             Swal.fire(res.success ? "成功" : "錯誤", res.message, res.success ? "success" : "error")
               .then(() => {
-                  $("#addWorkModal").modal("hide");
-                  calendar.refetchEvents();
+                  const modalEl = document.getElementById("addWorkModal");
+                  const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                  if (modalInstance) modalInstance.hide();
+
+                  // ✅ 清理 backdrop & body 狀態
+                  $(".modal-backdrop").remove();
+                  $("body").removeClass("modal-open").css("overflow", "");
+                  $("#modalContainer").empty();
+
+                  if (window.calendar) {
+                      window.calendar.refetchEvents();
+                  } else {
+                      console.warn("⚠️ 無法重新整理事件，calendar 不存在");
+                  }
               });
         });
     });
 
+    // ✅ 修正版：離開按鈕（完全清理 Modal）
     $("#cancelBtn").on("click", function () {
-        $("#addWorkModal").modal("hide");
+        const modalEl = document.getElementById("addWorkModal");
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+
+        if (modalInstance) modalInstance.hide();
+
+        // 🧹 保險機制：確保 backdrop / body 清理乾淨
+        $(".modal-backdrop").remove();
+        $("body").removeClass("modal-open").css({ "overflow": "", "padding-right": "" });
+        $("#modalContainer").empty();
     });
 
+    // 🗺️ 地圖預覽功能
     function updateMapPreview() {
         const location = document.getElementById("workLocation").value.trim();
         const mapContainer = document.getElementById("mapPreviewContainer");
@@ -168,6 +201,13 @@
         if (initLoc) updateMapPreview();
     });
 
+    // ✅ 額外保護：任何 modal 被關閉後都清理 backdrop
+    $(document).on("hidden.bs.modal", "#addWorkModal", function () {
+        $(".modal-backdrop").remove();
+        $("body").removeClass("modal-open").css("overflow", "");
+        $("#modalContainer").empty();
+    });
 </script>
+
 
 
