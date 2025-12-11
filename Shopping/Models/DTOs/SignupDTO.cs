@@ -2,7 +2,7 @@
 
 namespace Shopping.Models.DTOs
 {
-    public class Signup
+    public class SignupDTO
     {
         [Required]
         public string Email { get; set; }

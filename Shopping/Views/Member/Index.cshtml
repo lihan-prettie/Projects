@@ -18,9 +18,9 @@
     <h3 class="text-success">登入會員</h3>
     <form asp-controller="Member" asp-action="Login" method="post">
         <label class="text-success">電子郵件</label>
-        <input type="text" name="LoginAccount" id="LoginEmail" placeholder="請輸入帳號"/>
+        <input type="text" name="LoginAccount" id="LoginEmail" placeholder="請輸入帳號" required/>
         <label class="text-success">密碼</label>
-        <input type="password" name="LoginPassword" id="LoginPsw" placeholder="請輸入密碼"/>
+        <input type="password" name="LoginPassword" id="LoginPsw" placeholder="請輸入密碼" required />
         <button class="btn btn-outline-success" type="submit" id="LoginBtn">登入</button>
     </form>
 </div>
@@ -30,13 +30,13 @@
     <h3 class="text-success">註冊會員</h3>
     <form asp-controller="Member" asp-action="Signup" method="post">
         <label class="text-success">使用者名稱</label>
-        <input type="text" name="name" placeholder="請輸入名稱" id="name" />
+        <input type="text" name="name" placeholder="請輸入名稱" id="name" required />
         <label class="text-success">電子郵件</label>
-        <input type="text" name="SignupAccount" placeholder="請輸入帳號" id="SignupEmail" />
+        <input type="text" name="SignupAccount" placeholder="請輸入帳號" id="SignupEmail" required />
         <label class="text-success">密碼</label>
-        <input type="password" name="SignupPassword" placeholder="請輸入密碼" id="SignupPsw" />
+        <input type="password" name="SignupPassword" placeholder="請輸入密碼" id="SignupPsw" required />
         <label class="text-success">確認密碼</label>
-        <input type="password" name="SignupPasswordConfirmed" placeholder="請再次輸入密碼" />
+        <input type="password" name="SignupPasswordConfirmed" placeholder="請再次輸入密碼" required />
         <button class="btn btn-outline-success" type="submit" id="SignupBtn">註冊</button>
     </form>
 </div>
@@ -57,44 +57,6 @@
             $("#Signup").removeClass("d-none");
             });
 
-            $("#LoginBtn").on("click", async ()=>{
-                var email = $("#LoginEmail").val();
-                var psw = $("#LoginPsw").val();
-                Login(email,psw);
-            });
-
-            $("#SignupBtn").on("click",()=>{
-                var email = $("#SignupEmail").val();
-                var psw = $("#SignupPsw").val();
-                var name = $("#name").val();
-                Signup(email,psw,name;
-            });
-
-            function Login(email,psw){
-                if(!email || !psw) return Swal.fire("電子郵件和密碼為必填欄位");
-
-                $.ajax({
-                    type:"POST",
-                    url:"Member/Login",
-                    data:{Email:email,Password:psw},
-                    success:function(res){
-                        if(res.success)
-                    },
-                });
-            };
-
-            function Signup(email,psw,name){
-                if(!email||!psw||!name) return Swal.fire("電子郵件、密碼、和名稱為必填欄位");
-
-                $.ajax({
-                    type:"POST",
-                    url:"Member/Signup",
-                    data:{Email:email,Password:psw,UserName:name},
-                    success:function(){
-
-                    };
-                });
-            };
         });
     </script>
 }
