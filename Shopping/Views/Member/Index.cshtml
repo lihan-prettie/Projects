@@ -215,6 +215,7 @@
                             }).then(()=>{
                                 $("#LoginEmail,#LoginPsw").val("");
                                 $("#LoginBtn").prop("disabled",true);
+                                window.location.href="/Product/Index";
                             });
                         }else{
                             Swal.fire({
