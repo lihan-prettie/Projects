@@ -17,6 +17,8 @@ public partial class Member
 
     public DateTime? RegisterDate { get; set; }
 
+    public string PasswordSalt { get; set; }
+
     public virtual ICollection<Cart> Carts { get; set; } = new List<Cart>();
 
     public virtual ICollection<Order> Orders { get; set; } = new List<Order>();

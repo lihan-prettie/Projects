@@ -64,6 +64,7 @@ public partial class ShoppingContext : DbContext
             entity.Property(e => e.PasswordHash)
                 .IsRequired()
                 .HasMaxLength(200);
+            entity.Property(e => e.PasswordSalt).HasMaxLength(100);
             entity.Property(e => e.RegisterDate)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
