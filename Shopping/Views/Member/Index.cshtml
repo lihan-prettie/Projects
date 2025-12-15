@@ -16,17 +16,17 @@
 @* 登入表單 *@
 <div id="Login" class="form-container">
     <h3 class="text-success p-3"><strong>登入會員</strong></h3>
-    <form asp-controller="Member" asp-action="Login" method="post">
+    <form>
         <div class="p-3">
             <label class="text-success">電子郵件</label>
-            <input type="text" name="LoginAccount" id="LoginEmail" placeholder="請輸入帳號" required />
+            <input type="text" name="Email" id="LoginEmail" placeholder="請輸入帳號" required />
         </div>
         <div class="p-3">
             <label class="text-success">密碼</label>
-            <input type="password" name="LoginPassword" id="LoginPsw" placeholder="請輸入密碼" required />
+            <input type="password" name="Password" id="LoginPsw" placeholder="請輸入密碼" required />
         </div>
         <div class="p-3">
-            <button class="btn btn-success" type="submit" id="LoginBtn" disabled>登入</button>
+            <button class="btn btn-success" type="button" id="LoginBtn" disabled>登入</button>
         </div>
     </form>
 </div>
@@ -191,9 +191,41 @@
                 });
             });
 
-
             //登入
+            $("#LoginEmail,#LoginPsw").on("blur",()=>{
+                const email = $("#LoginEmail").val().trim();
+                const psw = $("#LoginPsw").val().trim();
 
+                if(email && psw){$("#LoginBtn").prop("disabled",false);}else{$("#LoginBtn").prop("disabled",true);}
+            });
+            $("#LoginBtn").on("click",(e)=>{
+                e.preventDefault();
+                const email = $("#LoginEmail").val().trim();
+                const psw = $("#LoginPsw").val().trim();
+
+                $.ajax({
+                    type:"POST",
+                    url:"/Member/Login",
+                    data:{Email:email,Password:psw},
+                    success:(res)=>{
+                        if(res.success){
+                            Swal.fire({
+                                title:res.message,
+                                icon:"success"
+                            }).then(()=>{
+                                $("#LoginEmail,#LoginPsw").val("");
+                                $("#LoginBtn").prop("disabled",true);
+                            });
+                        }else{
+                            Swal.fire({
+                                title:"登入失敗",
+                                text:res.message,
+                                icon:"error"
+                            });
+                        }
+                    }
+                });
+            });
         });
     </script>
 }

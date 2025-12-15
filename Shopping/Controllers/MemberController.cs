@@ -23,10 +23,10 @@ namespace Shopping.Controllers
         [HttpPost]
         public IActionResult Signup(SignupDTO dto)
         {
-            if (!ModelState.IsValid) return Json(new { success=false,message="註冊資訊未填寫完整"});
-            if (!new EmailAddressAttribute().IsValid(dto.Email)) return Json(new { success=false,message= "電子郵件格式不正確" });
-            if (!Regex.IsMatch(dto.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W]).{8,15}$")) return Json(new {success=false,message = "密碼格式不合"});
-            if (_content.Members.Any(a => a.Email == dto.Email)) return Json(new { success=false,message = "電子郵件已註冊"});
+            if (!ModelState.IsValid) return Json(new { success = false, message = "註冊資訊未填寫完整" });
+            if (!new EmailAddressAttribute().IsValid(dto.Email)) return Json(new { success = false, message = "電子郵件格式不正確" });
+            if (!Regex.IsMatch(dto.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W]).{8,15}$")) return Json(new { success = false, message = "密碼格式不合" });
+            if (_content.Members.Any(a => a.Email == dto.Email)) return Json(new { success = false, message = "電子郵件已註冊" });
 
             //生成位元的salt
             var saltBytes = RandomNumberGenerator.GetBytes(16);
@@ -47,7 +47,7 @@ namespace Shopping.Controllers
             _content.Add(member);
             _content.SaveChanges();
 
-            return Json(new { success=true,message="註冊成功" });
+            return Json(new { success = true, message = "註冊成功" });
         }
 
         [HttpPost]
@@ -65,8 +65,25 @@ namespace Shopping.Controllers
         }
 
         [HttpPost]
-        public IActionResult Login()
+        public IActionResult Login(LoginDTO dto)
         {
+            if (!ModelState.IsValid) return Json(new { success = false, message = "登入資訊未填寫完整" });
+            if (!_content.Members.Any(a => a.Email == dto.Email)) return Json(new { success = false, message = "電子郵件錯誤" });
+            var user = _content.Members.FirstOrDefault(f => f.Email == dto.Email);
+            if (user == null)
+            {
+                return Json(new { success = false, message = "使用者不存在" });
+            }
+            string salt = user.PasswordSalt ?? "";
+            string passwordHashed = user.PasswordHash;
+            bool CorrectPsw = HashPassword(dto.Password, salt) == passwordHashed;
+            if (!CorrectPsw) { return Json(new { success = false, message = "密碼錯誤" }); }
+
+            HttpContext.Session.SetInt32("UserId", user.MemberId);
+            HttpContext.Session.SetString("UserName", user.UserName);
+            HttpContext.Session.SetString("Email", user.Email);
+
+            return Json(new { success = true, message = "登入成功" });
 
         }
 
