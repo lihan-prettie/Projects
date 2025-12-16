@@ -35,6 +35,9 @@
                                 @Html.AntiForgeryToken()
                                 <button class="btn btn-success">登出</button>
                             </form>
+                            <form asp-controller="Cart" asp-action="Index" method="get" class="d-inline">
+                                <button class="btn btn-warning">購物車</button>
+                            </form>
                         </div>
                     }
                     else

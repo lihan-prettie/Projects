@@ -11,6 +11,7 @@ namespace Shopping.Controllers
             _context = context;
         }
 
+        [HttpGet]
         public IActionResult Index()
         {
             ViewBag.UserName = HttpContext.Session.GetString("UserName");

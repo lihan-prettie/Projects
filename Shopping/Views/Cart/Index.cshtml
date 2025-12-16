@@ -1,0 +1,20 @@
+﻿@model List<Shopping.Models.DTOs.CartItemSessionDTO>
+@using Microsoft.AspNetCore.Http
+@{
+    ViewData["Title"] = "購物車";
+}
+@{
+    var UserId = Context.Session.GetInt32("UserId");
+    var UserName = Context.Session.GetString("UserName");
+    var Email = Context.Session.GetString("Email");
+}
+<h2 class="text-center text-success fw-bold"> @UserName 的購物車</h2>
+@if (!Model.Any())
+{
+    <h3 class="text-center text-success fw-bold">購物車目前無商品</h3>
+    <a asp-controller="Product" asp-action="Index" class="text-success">繼續購物</a>
+}
+else
+{
+    
+}
