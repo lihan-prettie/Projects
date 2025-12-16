@@ -88,7 +88,6 @@ namespace Shopping.Controllers
 
         }
 
-        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Logout()

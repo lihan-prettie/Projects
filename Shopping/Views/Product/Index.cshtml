@@ -1,4 +1,45 @@
-﻿@{
+﻿@model List<Shopping.Models.Product>
+@{
     ViewData["Title"] = "商城";
 }
-商城 
+@section Styles{
+    <style>
+        .qty-icon{
+            font-size: 1.5rem;
+            line-height:1;
+        }
+    </style>
+}
+<div class="container">
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach(var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm">
+                    @* 圖片 *@
+                    <img src="@item.ImageUrl" alt="@item.ProductName" class="card-img-top" style="height:200px;object-fit:cover;" />
+
+                    <div class="card-body d-flex flex-column">
+                        @* 商品名和價格 *@
+                        <h5 class="card-title text-center">@item.ProductName</h5>
+                        <p class="card-text text-dark fw-bold text-center">NT$@item.Price</p>
+
+                        @* 加入購物車 *@
+                        <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mt-auto">
+                            <input type="hidden" name="productId" value="@item.ProductId" />
+
+                            <div class="mb-2">
+                                <div class="input-group">
+                                    <button class="btn btn-outline-success" type="button" onclick="this.nextElementSibling.stepDown()"><strong class="qty-icon">-</strong></button>
+                                    <input type="number" name="quantity" value="1" min="1" max="@item.Stock" class="form-control text-center fw-bold" />
+                                    <button class="btn btn-outline-success" type="button" onclick="this.previousElementSibling.stepUp()"><strong class="qty-icon">+</strong></button>
+                                </div>
+                            </div>
+                            <button class="btn btn-success w-100" type="submit">加入購物車</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
