@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Shopping.Models;
 using Shopping.Models.DTOs;
 using System.ComponentModel.DataAnnotations;
@@ -85,6 +86,15 @@ namespace Shopping.Controllers
 
             return Json(new { success = true, message = "登入成功" });
 
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Logout()
+        {
+            HttpContext.Session.Clear();
+            return RedirectToAction("Index", "Home");
         }
 
         private string HashPassword(string password, string salt)
