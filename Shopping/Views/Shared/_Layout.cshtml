@@ -1,68 +1,187 @@
-﻿@using Microsoft.AspNetCore.Http
-
-<!DOCTYPE html>
-<html lang="en">
+﻿<!DOCTYPE html>
+<html lang="zh-TW">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"]</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Shopping.styles.css" asp-append-version="true" />
+
+    <style>
+        /* ===== Nav 美化 ===== */
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: #198754 !important;
+        }
+
+        .nav-action-btn {
+            min-width: 96px;
+            border-radius: 999px;
+            padding: 6px 16px;
+            font-weight: 500;
+        }
+
+        .cart-btn {
+            background: linear-gradient(135deg, #ffc107, #ffb300);
+            color: #212529 !important;
+            border: none;
+        }
+
+            .cart-btn:hover {
+                filter: brightness(0.95);
+            }
+
+        .cart-badge {
+            font-size: 0.7rem;
+            padding: 4px 6px;
+        }
+
+        .logout-btn {
+            border-radius: 999px;
+            padding: 6px 16px;
+        }
+    </style>
 </head>
+
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            @{
-                var UserId = Context.Session.GetInt32("UserId");
-                var UserName = Context.Session.GetString("UserName");
-                var Email = Context.Session.GetString("Email");
-            }
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">首頁</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="ms-auto">
-                    @if(UserId != null)
-                    {
-                        <div>
-                            <span class="mx-2">
-                                @UserName  歡迎光臨
-                            </span>
-                            <form asp-controller="Cart" asp-action="Index" method="get" class="d-inline">
-                                <button class="btn btn-warning">購物車</button>
-                            </form>
+        <nav class="navbar navbar-expand-sm bg-white border-bottom shadow-sm mb-4">
+            <div class="container">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+                    商城模擬
+                </a>
 
-                            <form asp-controller="Member" asp-action="Logout" method="Post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-success">登出</button>
-                            </form>
-                        </div>
-                    }
-                    else
-                    {
-                        <a href="Member/Index" class="btn btn-success text-light">登入/註冊</a>
-                    }
+                <div class="ms-auto d-flex align-items-center gap-2" id="authArea">
+                    <!-- JS 動態產生 -->
                 </div>
             </div>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
+    <footer class="border-top footer text-muted mt-5">
+        <div class="container py-3 text-center">
             &copy; 2025 - 商城模擬
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        /* ===== JWT 共用工具 ===== */
+        const TOKEN_KEY = "auth_token";
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY);
+        }
+        function setToken(token){
+            return localStorage.setItem(TOKEN_KEY,token);
+        }
+        function logout() {
+            localStorage.removeItem(TOKEN_KEY);
+            location.href = "/Member/Index";
+        }
+
+        async function authFetch(url, options = {}) {
+            const token = getToken();
+            const headers = {
+                ...(options.headers || {}),
+                "Content-Type": "application/json",
+                ...(token ? { "Authorization": `Bearer ${token}` } : {})
+            };
+            return fetch(url, { ...options, headers });
+        }
+
+        /* ===== Header 狀態 ===== */
+        document.addEventListener("DOMContentLoaded", () => {
+            initHeader();
+            updateCartBadge();
+        });
+
+        async function initHeader() {
+            const authArea = document.getElementById("authArea");
+            const token = getToken();
+            const path = location.pathname.toLowerCase();
+
+            /* 未登入 */
+            if (!token) {
+                authArea.innerHTML = `
+                    <a href="/Member/Index"
+                       class="btn btn-success nav-action-btn text-light">
+                        登入 / 註冊
+                    </a>
+                `;
+                return;
+            }
+
+            /* 驗證 JWT */
+            const res = await authFetch("/api/carts");
+            if (res.status === 401) {
+                localStorage.removeItem(TOKEN_KEY);
+                location.href = "/Member/Index";
+                return;
+            }
+
+            const data = await res.json();
+            const count = data.items.length;
+            const isCartPage = path.startsWith("/cart");
+
+            authArea.innerHTML = `
+                ${
+                    isCartPage
+                        ? `<a href="/Product/Index"
+                              class="btn btn-outline-primary nav-action-btn">
+                                ← 回商品頁
+                           </a>`
+                        : `<a href="/Cart/Index"
+                              class="btn cart-btn nav-action-btn position-relative">
+                                購物車
+                                <span id="cartBadge"
+                                      class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge"
+                                      style="${count > 0 ? '' : 'display:none'}">
+                                    ${count}
+                                </span>
+                           </a>`
+                }
+                <button class="btn btn-outline-success logout-btn"
+                        onclick="logout()">
+                    登出
+                </button>
+            `;
+        }
+
+        async function updateCartBadge() {
+            const badge = document.getElementById("cartBadge");
+            if (!badge) return;
+
+            const res = await authFetch("/api/carts");
+            if (!res.ok) {
+                badge.style.display = "none";
+                return;
+            }
+
+            const data = await res.json();
+            const count = data.items.length;
+
+            if (count === 0) {
+                badge.style.display = "none";
+            } else {
+                badge.innerText = count;
+                badge.style.display = "inline-block";
+            }
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
     @await RenderSectionAsync("Styles", required: false)
 </body>

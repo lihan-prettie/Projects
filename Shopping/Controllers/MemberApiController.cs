@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Shopping.Models;
@@ -25,7 +25,7 @@ namespace Shopping.Controllers
         [HttpPost("signup")]
         public async Task<IActionResult> Signup([FromBody] SignupDTO dto)
         {
-            if ( await _content.Members.AnyAsync(a => a.Email == dto.Email)) return Conflict(new { message = "電子郵件已註冊" });
+            if (await _content.Members.AnyAsync(a => a.Email == dto.Email)) return Conflict(new { message = "電子郵件已註冊" });
 
             //生成位元的salt
             var saltBytes = RandomNumberGenerator.GetBytes(16);
@@ -50,12 +50,12 @@ namespace Shopping.Controllers
         }
 
         [HttpGet("check-email")]
-        public async Task<IActionResult> CheckEmail([FromQuery]string email)
+        public async Task<IActionResult> CheckEmail([FromQuery] string email)
         {
             bool exist = await _content.Members.AnyAsync(a => a.Email == email);
-            
-                return Ok(new { exist });
-            
+
+            return Ok(new { exist });
+
         }
 
         [HttpPost("login")]
@@ -64,11 +64,11 @@ namespace Shopping.Controllers
             var user = await _content.Members.FirstOrDefaultAsync(f => f.Email == dto.Email);
             if (user == null) return Unauthorized(new { message = "帳號或密碼錯誤" });
 
-            var hash = HashPassword(dto.Password, user.PasswordSalt ??"");
-            if (hash != user.PasswordHash) return Unauthorized(new { message = "帳號或密碼錯誤"});
+            var hash = HashPassword(dto.Password, user.PasswordSalt ?? "");
+            if (hash != user.PasswordHash) return Unauthorized(new { message = "帳號或密碼錯誤" });
 
             var token = GenerateJwt(user);
-            return Ok(new { token, expireMin = int.Parse(_configuration["Jwt:ExpireMinutes"]!)});
+            return Ok(new { token, expireMin = int.Parse(_configuration["Jwt:ExpireMinutes"]!) });
 
         }
 
@@ -97,14 +97,15 @@ namespace Shopping.Controllers
             {
                 new Claim(ClaimTypes.NameIdentifier, user.MemberId.ToString()),
                 new Claim(ClaimTypes.Email,user.Email),
-                new Claim("UserName",user.UserName)
+                new Claim("UserName",user.UserName),
+                new Claim("MemberId",user.MemberId.ToString())
             };
 
             //產生加密用金鑰
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new Exception("JWT Key未設定")));
 
             //用key搭配HmacSha256(HS256)簽章演算法
-            var creds = new SigningCredentials(key,SecurityAlgorithms.HmacSha256);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             //建立jwt本體(header、payload和signature)
             var token = new JwtSecurityToken(
@@ -112,7 +113,7 @@ namespace Shopping.Controllers
                     issuer: _configuration["Jwt:Issuer"],
                     claims: claims,
                     expires: DateTime.UtcNow.AddMinutes(int.Parse(_configuration["Jwt:ExpireMinutes"])),
-                    signingCredentials:creds
+                    signingCredentials: creds
             );
 
             //回傳結果

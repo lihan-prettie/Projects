@@ -73,42 +73,20 @@
         $(document).ready(function () {
             $(".text-danger").hide();
 
+            //改變視窗顯示(註冊or登入)
             $("#btnLogin").on("click", () => {
                 $("#Signup").addClass("d-none");
                 $("#Login").removeClass("d-none");
             });
-
+            
             $("#btnSignup").on("click", () => {
                 $("#Login").addClass("d-none");
                 $("#Signup").removeClass("d-none");
             });
 
-            //註冊
+            //設定電子郵件檢查用變數和密碼模板
             let emailValid = false;
             const passwordPattern = /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^\w\s]).{8,15}$/;
-            const TOKEN_KEY = "authToken";
-
-            //token設置
-            function setToken(token){
-                localStorage.setItem(TOKEN_KEY,token);
-            }
-
-            //取token資料
-            function getToken(){
-                return localStorage.getItem(TOKEN_KEY);
-            }
-
-            //統一所有api呼叫且如果有jwt會自動帶
-            async function authFetch(url, options={}){
-                const token = getToken();
-                const headers = {
-                    ...(options.headers || {}),
-                    "Content-Type": "application/json",
-                    ...(token?{"Authorization":`Bearer ${token}`} : {} )
-                };
-                const res = await fetch(url,{...options,headers});
-                return res;
-            }
 
             //登入函式
             async function login(email,password){
@@ -144,6 +122,7 @@
                 return data;
             }
 
+            //確認所有欄位是否填寫完整
             function SignupFormValid() {
                 const name = $("#name").val().trim();
                 const SignupEmail = $("#SignupEmail").val().trim();
@@ -158,34 +137,33 @@
                 $("#SignupBtn").prop("disabled", !valid);
             }
 
-            function CheckEmail(email) {
-                $.ajax({
-                    type: "GET",
-                    url: "/api/members/check-email",
-                    data: { email },
-                    success: (res) => {
-                        if (res.exist) {
-                            $("#emailWarn").text("電子郵件已註冊").show();
-                            emailValid = false;
-                        } else {
-                            $("#emailWarn").hide();
-                            emailValid = true;
-                        }
-                        SignupFormValid();
-                    },
-                    error: () => {
-                    $("#emailWarn").text("無法檢查電子郵件，請稍後再試").show();
+            //檢查電子郵件是否已被註冊
+            async function CheckEmail(email) {
+                try{
+                    var res = await authFetch(`/api/members/check-email?email=${encodeURIComponent(email)}`,{method:"GET"});
+                    const data = await res.json();
+                    if(data.exist){
+                        $("#emailWarn").text("電子郵件已註冊").show();
+                        emailValid = false;
+                    }else{
+                        $("#emailWarn").hide();
+                        emailValid = true;
+                    }
+                }
+                catch{
+                    $("#emailWarn").text("電子郵件無法檢查，請稍後再試").show();
                     emailValid = false;
-        }
-
-                });
+                }
+                SignupFormValid();
             }
 
+            //註冊頁面輸入時錯誤訊息提示消失
             $("#name, #SignupEmail, #SignupPsw, #CheckPsw").on("input", () => {
                 $(".text-danger").hide();
                 SignupFormValid();
             });
 
+            //註冊頁面失焦時檢查欄位填寫狀況
             $("#name,#SignupPsw, #CheckPsw").on("blur", (e) => {
                 const id = e.target.id;
                 const name = $("#name").val().trim();
@@ -210,6 +188,7 @@
                 SignupFormValid();
             });
 
+            //註冊頁面電子郵件欄位檢查是否已註冊
             $("#SignupEmail").on("blur", () => {
                 const email = $("#SignupEmail").val().trim();
                 const emailPattern = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
@@ -220,6 +199,7 @@
                 CheckEmail(email);
             });
 
+            //註冊頁面確認按鈕
             $("#SignupBtn").on("click", async () => {
                 const name = $("#name").val().trim();
                 const SignupEmail = $("#SignupEmail").val().trim();
@@ -241,13 +221,16 @@
                 }
             });
 
-            //登入
+            //登入頁面欄位填寫是否完整
             $("#LoginEmail,#LoginPsw").on("input",()=>{
                 const email = $("#LoginEmail").val().trim();
                 const psw = $("#LoginPsw").val().trim();
 
-                if(email && psw){$("#LoginBtn").prop("disabled",false);}else{$("#LoginBtn").prop("disabled",true);}
+                if(email && psw){$("#LoginBtn").prop("disabled",false);}
+                else{$("#LoginBtn").prop("disabled",true);}
             });
+
+            //登入頁面確認按鈕
             $("#LoginBtn").on("click", async (e)=>{
                 e.preventDefault();
                 const email = $("#LoginEmail").val().trim();
