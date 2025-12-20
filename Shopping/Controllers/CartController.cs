@@ -5,6 +5,8 @@ using Shopping.Models.DTOs;
 
 namespace Shopping.Controllers
 {
+    
+    //改成遵照RESTful api格式
     public class CartController : Controller
     {
         private readonly ShoppingContext _context;
@@ -16,7 +18,7 @@ namespace Shopping.Controllers
         public IActionResult Index()
         {
             var cart = HttpContext.Session.GetObject<List<CartItemSessionDTO>>("Cart") ?? new List<CartItemSessionDTO>();
-            return View();
+            return View(cart);
         }
 
         [HttpPost]
@@ -54,5 +56,13 @@ namespace Shopping.Controllers
 
             return RedirectToAction("Index","Cart");
         }
+
+        //[HttpPost]
+        //public IActionResult UpdateQuantity(int ProductId, int Quantity)
+        //{
+        //    var cart = HttpContext.Session.GetObject<List<CartItemSessionDTO>>("Cart") ?? new List<CartItemSessionDTO>();
+
+        //    if(cart.)
+        //}
     }
 }
