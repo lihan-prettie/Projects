@@ -1,5 +1,7 @@
 html {
   font-size: 14px;
+  position: relative;
+  min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,15 +10,136 @@ html {
   }
 }
 
+body {
+  margin-bottom: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  background-color: #f8f9fa;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+/* 導航欄美化 */
+.navbar {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
 }
 
-body {
-  margin-bottom: 60px;
+.navbar-brand {
+  transition: color 0.3s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.navbar-brand:hover {
+  background-color: rgba(0,0,0,0.05);
+  color: inherit !important;
+}
+
+/* 卡片美化 */
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px !important;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+/* 按鈕美化 */
+.btn {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+/* 輸入框美化 */
+.form-control {
+  border-radius: 8px;
+  border: 1px solid #ced4da;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* 表格美化 */
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(40, 167, 69, 0.05);
+}
+
+/* 頁腳美化 */
+.footer {
+  background-color: #f8f9fa !important;
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+/* 主內容區域 - 確保內容有足夠底部空間，即使在縮放時也不被遮擋 */
+main {
+  padding-bottom: 15vh !important;
+  min-height: calc(100vh - 200px);
+}
+
+/* 商品列表頁面額外的底部空間，使用視窗單位確保縮放時也有足夠空間 */
+.product-list-container {
+  padding-bottom: 20vh !important;
+  margin-bottom: 2rem;
+}
+
+/* 工具類 */
+.min-vh-75 {
+  min-height: 75vh;
+}
+
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* 動畫 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* 響應式調整 */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .btn-lg {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
 }

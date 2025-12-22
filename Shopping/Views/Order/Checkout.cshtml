@@ -2,31 +2,60 @@
     ViewData["Title"] = "結帳";
 }
 
-<h2 class="fw-bold mb-4">結帳確認</h2>
+<div class="container-fluid px-4 py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="mb-4">
+                <h2 class="fw-bold text-primary mb-2">
+                    <i class="bi bi-cart-check me-2"></i>結帳確認
+                </h2>
+                <p class="text-muted">請確認您的訂單資訊</p>
+            </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>商品</th>
-            <th>價格</th>
-            <th>數量</th>
-            <th>小計</th>
-        </tr>
-    </thead>
-    <tbody id="checkoutItems"></tbody>
-</table>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>訂單內容</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4"><i class="bi bi-box-seam me-1"></i>商品</th>
+                                    <th class="text-end">單價</th>
+                                    <th class="text-center">數量</th>
+                                    <th class="text-end pe-4">小計</th>
+                                </tr>
+                            </thead>
+                            <tbody id="checkoutItems"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-<h4 class="text-end">
-    總金額：NT$ <span id="checkoutTotal">0</span>
-</h4>
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <div>
+                            <span class="text-muted d-block mb-1">訂單總金額</span>
+                            <span class="fs-2 fw-bold text-danger">
+                                <i class="bi bi-currency-dollar me-1"></i>NT$ <span id="checkoutTotal">0</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-<div class="text-end mt-4">
-    <button id="cancelBtn" class="btn btn-outline-success btn-lg">
-        取消結帳
-    </button>
-    <button id="checkoutBtn" class="btn btn-success btn-lg">
-        確認結帳
-    </button>
+            <div class="d-flex justify-content-between gap-3 flex-wrap">
+                <button id="cancelBtn" class="btn btn-outline-secondary btn-lg px-4">
+                    <i class="bi bi-arrow-left me-2"></i>返回購物車
+                </button>
+                <button id="checkoutBtn" class="btn btn-success btn-lg px-5 fw-bold">
+                    <i class="bi bi-check-circle me-2"></i>確認結帳
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -57,7 +86,15 @@
 
             if (!data.items || data.items.length === 0) {
                 tbody.innerHTML = `
-                            <tr><td colspan="4" class="text-center">購物車是空的</td></tr>
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-muted">
+                                    <i class="bi bi-cart-x" style="font-size: 3rem;"></i>
+                                    <p class="mt-3 mb-0 fs-5">購物車是空的</p>
+                                    <a href="/Cart/Index" class="btn btn-outline-primary mt-3">
+                                        <i class="bi bi-arrow-left me-2"></i>返回購物車
+                                    </a>
+                                </td>
+                            </tr>
                         `;
                 document.getElementById("checkoutBtn").disabled = true;
                 return;
@@ -71,11 +108,11 @@
                 const subtotal = item.subtotal || item.Subtotal;
 
                 tbody.innerHTML += `
-                            <tr>
-                                <td>${productName}</td>
-                                <td>NT$${price}</td>
-                                <td>${quantity}</td>
-                                <td>NT$${subtotal}</td>
+                            <tr class="border-bottom">
+                                <td class="fw-semibold ps-4">${productName}</td>
+                                <td class="text-end">NT$${price}</td>
+                                <td class="text-center">${quantity}</td>
+                                <td class="text-end fw-bold text-danger pe-4">NT$${subtotal}</td>
                             </tr>
                         `;
             });
