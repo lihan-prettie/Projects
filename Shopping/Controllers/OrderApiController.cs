@@ -21,39 +21,47 @@ namespace Shopping.Controllers
         public async Task<IActionResult> GetOrders()
         {
             var memberId = int.Parse(User.FindFirst("MemberId")!.Value);
-            var order = await _context.Orders.Where(w => w.MemberId == memberId).OrderByDescending(o => o.CreatedAt).Select(s => new OrderListResponse
+            var orders = await _context.Orders.Where(w => w.MemberId == memberId).OrderByDescending(o => o.CreatedAt).ToListAsync();
+
+            var result = orders.Select(s => new OrderListResponse
             {
                 OrderId = s.OrderId,
-                CreatedAt = s.CreatedAt,
+                // 將 UTC 時間轉換為台灣時間（+8時區）
+                CreatedAt = s.CreatedAt.HasValue ? s.CreatedAt.Value.AddHours(8) : (DateTime?)null,
                 TotalAmount = s.TotalAmount,
                 PaymentStatus = s.PaymentStatus
-            }).ToListAsync();
+            }).ToList();
 
-            return Ok(order);
+            return Ok(result);
         }
 
         [HttpGet("{orderId}")]
         public async Task<IActionResult> GetOrderDetail(int orderId)
         {
             var memberId = int.Parse(User.FindFirst("MemberId")!.Value);
-            var order = await _context.Orders.Include(i => i.OrderItems).ThenInclude(c => c.Product).Where(c => c.OrderId == orderId && c.MemberId==memberId).Select(s => new OrderDetailResponse
+            var orderEntity = await _context.Orders.Include(i => i.OrderItems).ThenInclude(c => c.Product)
+                .FirstOrDefaultAsync(c => c.OrderId == orderId && c.MemberId == memberId);
+
+            if (orderEntity == null)
             {
-                OrderId = s.OrderId,
-                CreatedAt = s.CreatedAt,
-                TotalAmount = s.TotalAmount,
-                PaymentStatus = s.PaymentStatus,
-                Items = s.OrderItems.Select(i => new OrderItemDto
+                return NotFound(new { success = false, message = "找不到訂單" });
+            }
+
+            var order = new OrderDetailResponse
+            {
+                OrderId = orderEntity.OrderId,
+                // 將 UTC 時間轉換為台灣時間（+8時區）
+                CreatedAt = orderEntity.CreatedAt.HasValue ? orderEntity.CreatedAt.Value.AddHours(8) : (DateTime?)null,
+                TotalAmount = orderEntity.TotalAmount,
+                PaymentStatus = orderEntity.PaymentStatus,
+                Items = orderEntity.OrderItems.Select(i => new OrderItemDto
                 {
                     ProductName = i.Product.ProductName,
                     Quantity = i.Quantity,
                     UnitPrice = i.UnitPrice
                 }).ToList()
-            }).FirstOrDefaultAsync();
+            };
 
-            if(order == null)
-            {
-                return NotFound(new { success = false, message = "找不到訂單" });
-            }
             return Ok(order);
         }
 
@@ -62,10 +70,10 @@ namespace Shopping.Controllers
         {
             var memberId = int.Parse(User.FindFirst("MemberId")!.Value);
 
-            var cart = await _context.Carts.Include(a=>a.CartItems).ThenInclude(q=>q.Product).FirstOrDefaultAsync(c => c.MemberId == memberId);
+            var cart = await _context.Carts.Include(a => a.CartItems).ThenInclude(q => q.Product).FirstOrDefaultAsync(c => c.MemberId == memberId);
             if (cart == null || !cart.CartItems.Any())
             {
-                return BadRequest(new {success = false,message= "購物車是空的，無法結帳" });
+                return BadRequest(new { success = false, message = "購物車是空的，無法結帳" });
             }
 
             var order = new Order
@@ -73,7 +81,7 @@ namespace Shopping.Controllers
                 MemberId = memberId,
                 CreatedAt = DateTime.UtcNow,
                 PaymentStatus = "Pending",
-                TotalAmount = cart.CartItems.Sum(c =>c.Quantity * (c.Product?.Price??0)),
+                TotalAmount = cart.CartItems.Sum(c => c.Quantity * (c.Product?.Price ?? 0)),
                 OrderItems = cart.CartItems.Select(c => new OrderItem
                 {
                     ProductId = c.ProductId,

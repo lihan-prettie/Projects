@@ -65,6 +65,29 @@
             integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
+        // 格式化時間顯示（後端已經返回台灣時間，這裡只需要格式化）
+        function formatTaiwanTime(dateString) {
+            if (!dateString) return '';
+            
+            const date = new Date(dateString);
+            
+            // 檢查日期是否有效
+            if (isNaN(date.getTime())) {
+                return dateString;
+            }
+            
+            // 直接格式化顯示（後端已經轉換為台灣時間）
+            return date.toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", loadOrders);
 
         async function loadOrders() {
@@ -94,7 +117,7 @@
                 tbody.innerHTML += `
                     <tr>
                         <td class="fw-bold">#${o.orderId}</td>
-                        <td>${new Date(o.createdAt).toLocaleString('zh-TW')}</td>
+                        <td>${formatTaiwanTime(o.createdAt)}</td>
                         <td class="fw-bold text-danger">NT$ ${o.totalAmount}</td>
                         <td><span class="badge bg-${o.paymentStatus === '已付款' ? 'success' : 'warning'}">${o.paymentStatus}</span></td>
                         <td class="text-center">
@@ -118,7 +141,7 @@
                         <strong><i class="bi bi-hash me-1"></i>訂單編號：</strong>#${order.orderId}
                     </div>
                     <div class="mb-3">
-                        <strong><i class="bi bi-calendar-event me-1"></i>下單時間：</strong>${new Date(order.createdAt).toLocaleString('zh-TW')}
+                        <strong><i class="bi bi-calendar-event me-1"></i>下單時間：</strong>${formatTaiwanTime(order.createdAt)}
                     </div>
                     <div class="mb-3">
                         <strong><i class="bi bi-credit-card me-1"></i>付款狀態：</strong>

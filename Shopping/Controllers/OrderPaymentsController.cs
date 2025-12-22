@@ -47,7 +47,7 @@ namespace Shopping.Controllers
 
             var paymentData = new Dictionary<string, string>
             {
-                { "MerchantID", _config["ECPay:MerchantID"] ?? "" },
+                { "MerchantID", _config["ECPay:MerchantID"] },
                 { "MerchantTradeNo", tradeNo },
                 { "MerchantTradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
                 { "PaymentType", "aio" },
@@ -79,16 +79,10 @@ namespace Shopping.Controllers
         {
             try
             {
-                // 立即輸出明顯的日誌，確保能被看到
-                _logger.LogWarning("========== 收到綠界回調請求 ==========");
-                Console.WriteLine("========== 收到綠界回調請求 ==========");
-
                 var form = Request.Form.ToDictionary(x => x.Key, x => x.Value.ToString());
 
-                _logger.LogWarning("收到綠界回調，參數數量: {Count}", form.Count);
-                _logger.LogWarning("回調參數: {Params}", string.Join(", ", form.Select(kv => $"{kv.Key}={kv.Value}")));
-                Console.WriteLine($"收到綠界回調，參數數量: {form.Count}");
-                Console.WriteLine($"回調參數: {string.Join(", ", form.Select(kv => $"{kv.Key}={kv.Value}"))}");
+                _logger.LogInformation("收到綠界回調，參數數量: {Count}", form.Count);
+                _logger.LogInformation("回調參數: {Params}", string.Join(", ", form.Select(kv => $"{kv.Key}={kv.Value}")));
 
                 if (!IsCheckMacValueValid(form))
                 {
@@ -207,91 +201,19 @@ namespace Shopping.Controllers
         }
 
         // ===============================
-        // 4️⃣ 調試用：手動測試回調（僅開發環境）
-        // POST /api/payment/test-callback?orderId=123
-        // ===============================
-        [HttpPost("/api/payment/test-callback")]
-        [AllowAnonymous]
-        public async Task<IActionResult> TestCallback([FromQuery] int orderId)
-        {
-            if (orderId <= 0)
-            {
-                return BadRequest(new { message = "請提供有效的 orderId，例如：/api/payment/test-callback?orderId=123" });
-            }
-
-            // 模擬綠界回調數據
-            var testForm = new Dictionary<string, string>
-            {
-                { "MerchantTradeNo", $"ORD{orderId}{DateTime.Now:MMddHHmmss}" },
-                { "RtnCode", "1" },
-                { "PaymentType", "Credit_CreditCard" },
-                { "TradeAmt", "1000" },
-                { "TradeDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") },
-                { "PaymentDate", DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") }
-            };
-
-            // 生成測試用的 CheckMacValue（簡化版，僅用於測試）
-            testForm["CheckMacValue"] = "TEST_MAC_VALUE";
-
-            _logger.LogWarning("========== 開始測試回調 ==========");
-            _logger.LogWarning("測試 orderId: {OrderId}", orderId);
-            Console.WriteLine($"========== 開始測試回調，orderId: {orderId} ==========");
-
-            // 直接更新訂單狀態（跳過 CheckMacValue 驗證）
-            var order = await _context.Orders.FindAsync(orderId);
-            if (order != null)
-            {
-                _logger.LogWarning("找到訂單 {OrderId}，當前狀態: {Status}", orderId, order.PaymentStatus);
-                Console.WriteLine($"找到訂單 {orderId}，當前狀態: {order.PaymentStatus}");
-
-                if (order.PaymentStatus == "Pending")
-                {
-                    order.PaymentStatus = "Paid";
-                    await _context.SaveChangesAsync();
-                    _logger.LogWarning("========== 訂單 {OrderId} 狀態已更新為 Paid ==========", orderId);
-                    Console.WriteLine($"========== 訂單 {orderId} 狀態已更新為 Paid ==========");
-                    return Ok(new
-                    {
-                        success = true,
-                        message = $"訂單 {orderId} 狀態已更新為 Paid",
-                        orderId = orderId,
-                        oldStatus = "Pending",
-                        newStatus = "Paid"
-                    });
-                }
-                else
-                {
-                    _logger.LogWarning("訂單 {OrderId} 狀態不是 Pending，當前狀態: {Status}", orderId, order.PaymentStatus);
-                    return Ok(new
-                    {
-                        success = false,
-                        message = $"訂單 {orderId} 狀態不是 Pending，當前狀態: {order.PaymentStatus}",
-                        orderId = orderId,
-                        currentStatus = order.PaymentStatus
-                    });
-                }
-            }
-            else
-            {
-                _logger.LogWarning("找不到訂單 {OrderId}", orderId);
-                return NotFound(new { message = $"找不到訂單 {orderId}" });
-            }
-        }
-
-        // ===============================
-        // 5️⃣ 調試用：查看回調數據格式說明
+        // 4️⃣ 調試用：查看回調數據（僅開發環境）
         // GET /api/payment/debug
         // ===============================
         [HttpGet("/api/payment/debug")]
         [AllowAnonymous]
         public IActionResult DebugCallback()
         {
+            // 這個方法用於測試，顯示回調的格式
             var sampleData = new
             {
                 message = "這是調試頁面，用於查看回調數據格式",
                 note = "實際的回調數據會顯示在控制台日誌中",
                 callbackUrl = "/api/payment/callback",
-                testCallbackUrl = "/api/payment/test-callback?orderId=123",
                 expectedFields = new
                 {
                     MerchantTradeNo = "ORD{orderId}{MMddHHmmss}",
@@ -305,10 +227,8 @@ namespace Shopping.Controllers
                     "1. 在 Visual Studio 中查看「輸出」視窗",
                     "2. 選擇「顯示輸出來源：偵錯」",
                     "3. 執行綠界支付測試",
-                    "4. 查看日誌中的 'RtnCode' 信息",
-                    "5. 或使用測試端點：POST /api/payment/test-callback?orderId=123"
-                },
-                importantNote = "⚠️ 綠界無法訪問 localhost！需要使用 ngrok 或類似工具暴露本地服務器到公網，或使用測試端點手動測試"
+                    "4. 查看日誌中的 'RtnCode' 信息"
+                }
             };
 
             return Ok(sampleData);
