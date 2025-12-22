@@ -1,0 +1,76 @@
+﻿@{
+    ViewData["Title"] = "訂單完成";
+}
+
+<div class="container-fluid px-4 py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="mb-4">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+            </div>
+            <h2 class="text-success fw-bold mb-3">訂單完成！</h2>
+            <p class="lead text-muted mb-4">感謝您的購買，我們已收到您的訂單</p>
+            
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="mb-3">
+                        <i class="bi bi-hash text-primary me-2"></i>
+                        <span class="text-muted">訂單編號：</span>
+                        <span id="orderId" class="fw-bold text-primary fs-4"></span>
+                    </div>
+                    <p class="text-muted small mb-0">
+                        <i class="bi bi-info-circle me-1"></i>我們將盡快處理您的訂單
+                    </p>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <button id="btnGoShop" class="btn btn-success btn-lg px-5">
+                    <i class="bi bi-arrow-left me-2"></i>繼續購物
+                </button>
+
+                <button id="btnGoOrders" class="btn btn-outline-primary btn-lg px-5">
+                    <i class="bi bi-receipt me-2"></i>查看訂單
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get("orderId");
+
+            if (!orderId) {
+                Swal.fire("無效頁面", "請從結帳流程完成訂單", "warning")
+                    .then(() => location.href = "/Product/Index");
+                return;
+            }
+
+            document.getElementById("orderId").innerText = `#${orderId}`;
+
+            async function markPaidAndGo(url) {
+                try {
+                    await authFetch(`/api/orders/${orderId}/payment/mock-paid`, {
+                        method: "POST"
+                    });
+                } catch (e) {
+                    console.warn("付款狀態更新失敗（開發期可忽略）", e);
+                } finally {
+                    location.href = url;
+                }
+            }
+
+            document.getElementById("btnGoShop")
+                .addEventListener("click", () => markPaidAndGo("/Product/Index"));
+
+            document.getElementById("btnGoOrders")
+                .addEventListener("click", () => markPaidAndGo("/Member/OrderPage"));
+        });
+    </script>
+
+}

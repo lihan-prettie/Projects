@@ -8,41 +8,74 @@
             font-size: 2rem;
             line-height: 1;
         }
+        .product-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.15) !important;
+        }
+        .card-img-top {
+            transition: transform 0.3s ease;
+        }
+        .product-card:hover .card-img-top {
+            transform: scale(1.05);
+        }
+        .product-row {
+            margin-bottom: 2rem;
+        }
+        /* 確保商品列表頁面有足夠的底部空間，即使在縮放時也不被遮擋 */
+        .product-list-container {
+            padding-bottom: 25vh !important;
+            margin-bottom: 2rem;
+        }
     </style>
 }
-<div class="container">
-    <div class="row row-cols-1 row-cols-md-3 g-4">
+<div class="py-4 product-list-container">
+    <div class="mb-4">
+        <h2 class="fw-bold text-primary mb-2">
+            <i class="bi bi-grid-3x3-gap me-2"></i>商品列表
+        </h2>
+        <p class="text-muted">選擇您喜歡的商品加入購物車</p>
+    </div>
+    <div class="row row-cols-1 row-cols-md-3 row-cols-lg-4 g-4">
         @foreach (var item in Model)
         {
             <div class="col">
-                <div class="card h-100 shadow-sm">
+                <div class="card h-100 shadow-sm product-card border-0">
                     @* 圖片 *@
-                    <img src="@item.ImageUrl" alt="@item.ProductName" class="card-img-top"
-                        style="height:200px;object-fit:cover;" />
+                    <div class="overflow-hidden" style="height:220px; background-color: #f8f9fa;">
+                        <img src="@item.ImageUrl" alt="@item.ProductName" class="card-img-top w-100 h-100"
+                            style="object-fit:cover;" />
+                    </div>
 
-                    <div class="card-body d-flex flex-column">
+                    <div class="card-body d-flex flex-column p-3">
                         @* 商品名和價格 *@
-                        <h5 class="card-title text-center">@item.ProductName</h5>
-                        <p class="card-text text-dark fw-bold text-center">NT$@item.Price</p>
+                        <h5 class="card-title text-center mb-2 fw-bold">@item.ProductName</h5>
+                        <p class="card-text text-danger fw-bold text-center fs-5 mb-3">
+                            <i class="bi bi-currency-dollar me-1"></i>@item.Price
+                        </p>
 
                         @* 加入購物車 *@
                         <div class="mt-auto">
                             <input type="hidden" name="productId" value="@item.ProductId" />
 
-                            <div class="mb-2">
+                            <div class="mb-3">
                                 <div class="input-group">
-                                    <button class="btn btn-outline-success" type="button"
+                                    <button class="btn btn-outline-secondary" type="button"
                                         onclick="this.nextElementSibling.stepDown()"><strong
                                             class="qty-icon">-</strong></button>
                                     <input type="number" name="quantity" value="1" min="1" max="@item.Stock"
                                         class="form-control text-center fw-bold quantity_inpute" />
-                                    <button class="btn btn-outline-success" type="button"
+                                    <button class="btn btn-outline-secondary" type="button"
                                         onclick="this.previousElementSibling.stepUp()"><strong
                                             class="qty-icon">+</strong></button>
                                 </div>
                             </div>
-                            <button class="btn btn-success w-100" onclick="addToCart(@item.ProductId,this)"
-                                type="button">加入購物車</button>
+                            <button class="btn btn-success w-100 fw-bold" onclick="addToCart(@item.ProductId,this)"
+                                type="button">
+                                <i class="bi bi-cart-plus me-2"></i>加入購物車
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -18,4 +18,6 @@ public partial class Order
     public string PaymentStatus { get; set; }
 
     public virtual Member Member { get; set; }
+
+    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

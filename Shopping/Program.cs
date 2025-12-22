@@ -14,7 +14,11 @@ namespace Shopping
             var connectionString = builder.Configuration.GetConnectionString("Shopping");
             // Add services to the container.
             builder.Services.AddDbContext<ShoppingContext>(o=>o.UseSqlServer(connectionString));
-            builder.Services.AddControllersWithViews();
+            builder.Services.AddControllersWithViews()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                });
             builder.Services.AddSession(o =>
             {
                 o.IdleTimeout=TimeSpan.FromMinutes(30);

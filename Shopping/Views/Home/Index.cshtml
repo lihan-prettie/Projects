@@ -1,7 +1,23 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "首頁";
 }
 
-<div class="text-center">
-    <h1 class="display-4">商城模擬專案</h1>
+<div class="container-fluid px-4">
+    <div class="row justify-content-center align-items-center min-vh-75">
+        <div class="col-lg-8 text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-shop" style="font-size: 5rem; color: #28a745;"></i>
+            </div>
+            <h1 class="display-3 fw-bold text-primary mb-4">歡迎來到商城</h1>
+            <p class="lead text-muted mb-4">探索豐富的商品，享受便捷的購物體驗</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="/Product/Index" class="btn btn-success btn-lg px-5">
+                    <i class="bi bi-bag-fill me-2"></i>開始購物
+                </a>
+                <a href="/Member/Index" class="btn btn-outline-primary btn-lg px-5">
+                    <i class="bi bi-person-circle me-2"></i>會員登入
+                </a>
+            </div>
+        </div>
+    </div>
 </div>
