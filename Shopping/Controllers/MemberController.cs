@@ -10,12 +10,9 @@ namespace Shopping.Controllers
             return View();
         }
 
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Logout()
+        public IActionResult OrderPage()
         {
-            HttpContext.Session.Clear();
-            return RedirectToAction("Index", "Home");
+            return View();
         }
     }
 }

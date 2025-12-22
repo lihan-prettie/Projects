@@ -1,1 +1,138 @@
-﻿
+﻿@{
+    ViewData["Title"] = "結帳";
+}
+
+<h2 class="fw-bold mb-4">結帳確認</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>商品</th>
+            <th>價格</th>
+            <th>數量</th>
+            <th>小計</th>
+        </tr>
+    </thead>
+    <tbody id="checkoutItems"></tbody>
+</table>
+
+<h4 class="text-end">
+    總金額：NT$ <span id="checkoutTotal">0</span>
+</h4>
+
+<div class="text-end mt-4">
+    <button id="cancelBtn" class="btn btn-outline-success btn-lg">
+        取消結帳
+    </button>
+    <button id="checkoutBtn" class="btn btn-success btn-lg">
+        確認結帳
+    </button>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+        integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", loadCheckout);
+
+        async function loadCheckout() {
+            const res = await authFetch("/api/carts");
+            if (!res.ok) {
+                Swal.fire("請先登入", "", "warning")
+                    .then(() => location.href = "/Member/Index");
+                return;
+            }
+
+            const data = await res.json();
+            console.log("購物車資料:", data); // 調試用
+
+            const tbody = document.getElementById("checkoutItems");
+            tbody.innerHTML = "";
+
+            if (!data.items || data.items.length === 0) {
+                tbody.innerHTML = `
+                            <tr><td colspan="4" class="text-center">購物車是空的</td></tr>
+                        `;
+                document.getElementById("checkoutBtn").disabled = true;
+                return;
+            }
+
+            data.items.forEach(item => {
+                // 支援 camelCase 和 PascalCase 兩種格式
+                const productName = item.productName || item.ProductName;
+                const price = item.price || item.Price;
+                const quantity = item.quantity || item.Quantity;
+                const subtotal = item.subtotal || item.Subtotal;
+
+                tbody.innerHTML += `
+                            <tr>
+                                <td>${productName}</td>
+                                <td>NT$${price}</td>
+                                <td>${quantity}</td>
+                                <td>NT$${subtotal}</td>
+                            </tr>
+                        `;
+            });
+
+            const total = data.total || data.Total || 0;
+            document.getElementById("checkoutTotal").innerText = total;
+        }
+
+        $("#checkoutBtn").on("click", async () => {
+            $("#checkoutBtn").prop("disabled", true);
+
+            try {
+                // 1️⃣ 建立訂單
+                const orderRes = await authFetch("/api/orders", {
+                    method: "POST"
+                });
+
+                if (!orderRes.ok) throw new Error("建立訂單失敗");
+
+                const orderData = await orderRes.json();
+                const orderId = orderData.orderId;
+
+                // 2️⃣ 建立付款流程
+                const paymentRes = await authFetch(`/api/orders/${orderId}/payment`, {
+                    method: "POST"
+                });
+
+                if (!paymentRes.ok) throw new Error("建立付款失敗");
+
+                const paymentData = await paymentRes.json();
+
+                // 3️⃣ 動態建立表單送到綠界
+                const form = document.createElement("form");
+                form.method = "POST";
+                form.action = paymentData.paymentUrl;
+
+                for (const key in paymentData.formData) {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = key;
+                    input.value = paymentData.formData[key];
+                    form.appendChild(input);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+
+            } catch (err) {
+                Swal.fire("結帳失敗", err.message, "error");
+                $("#checkoutBtn").prop("disabled", false);
+            }
+        });
+
+
+        $("#cancelBtn").on("click", () => {
+            window.location.href = "/Cart/Index";
+        });
+
+    </script>
+}

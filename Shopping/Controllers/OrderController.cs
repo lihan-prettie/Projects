@@ -8,5 +8,10 @@ namespace Shopping.Controllers
         {
             return View();
         }
+
+        public IActionResult Success()
+        {
+            return View();
+        }
     }
 }

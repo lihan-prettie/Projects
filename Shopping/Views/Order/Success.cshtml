@@ -1,0 +1,26 @@
+﻿<h2 class="text-success">訂單完成</h2>
+<p>感謝您的購買，我們已收到您的訂單。</p>
+<p>
+    訂單編號：
+    <span id="orderId" class="fw-bold text-primary"></span>
+</p>
+
+<a href="/Product/Index" class="btn btn-outline-success">
+    繼續購物
+</a>
+
+@section Scripts{
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded",async()=>{
+            const params = new URLSearchParams(window.location.search);
+            const orderId = params.get("orderId");
+            if(!orderId){
+             Swal.fire("無效頁面", "請從結帳流程完成訂單", "warning")
+            .then(() => location.href = "/Product/Index");
+                return;
+            }
+            document.getElementById("orderId").innerText = `#${orderId}`;
+        });
+    </script>
+}
