@@ -39,7 +39,7 @@ namespace Shopping.Controllers
             if (order == null)
                 return NotFound(new { message = "找不到訂單" });
 
-            if (order.PaymentStatus != "Pending")
+            if (order.PaymentStatus != "Pending" && order.PaymentStatus != "待付款")
                 return BadRequest(new { message = "訂單狀態不允許付款" });
 
             // 建立綠界參數
@@ -140,15 +140,15 @@ namespace Shopping.Controllers
                         {
                             _logger.LogInformation("找到訂單 {OrderId}，當前狀態: {Status}", targetOrderId, order.PaymentStatus);
 
-                            if (order.PaymentStatus == "Pending")
+                            if (order.PaymentStatus == "Pending" || order.PaymentStatus == "待付款")
                             {
-                                order.PaymentStatus = "Paid";
+                                order.PaymentStatus = "已付款";
                                 await _context.SaveChangesAsync();
-                                _logger.LogInformation("訂單 {OrderId} 狀態已更新為 Paid", targetOrderId);
+                                _logger.LogInformation("訂單 {OrderId} 狀態已更新為 已付款", targetOrderId);
                             }
                             else
                             {
-                                _logger.LogWarning("訂單 {OrderId} 狀態不是 Pending，當前狀態: {Status}", targetOrderId, order.PaymentStatus);
+                                _logger.LogWarning("訂單 {OrderId} 狀態不是 Pending 或 待付款，當前狀態: {Status}", targetOrderId, order.PaymentStatus);
                             }
                         }
                         else
@@ -233,6 +233,37 @@ namespace Shopping.Controllers
 
             return Ok(sampleData);
         }
+
+        // ===============================
+        // ⚠️ 開發用：手動標記為已付款
+        // POST /api/orders/{orderId}/payment/mock-paid
+        // ===============================
+        [HttpPost("mock-paid")]
+        [Authorize]
+        public async Task<IActionResult> MockPaid(int orderId)
+        {
+            var memberId = int.Parse(User.FindFirst("MemberId")!.Value);
+
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.OrderId == orderId && o.MemberId == memberId);
+
+            if (order == null)
+                return NotFound(new { message = "找不到訂單" });
+
+            if (order.PaymentStatus == "已付款")
+                return Ok(new { message = "訂單已是已付款狀態" });
+
+            order.PaymentStatus = "已付款";
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                success = true,
+                message = "（開發用）訂單已標記為已付款",
+                orderId = order.OrderId
+            });
+        }
+
 
         // ===============================
         // 🔐 CheckMacValue 工具

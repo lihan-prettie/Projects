@@ -29,7 +29,9 @@ namespace Shopping.Controllers
                 // 將 UTC 時間轉換為台灣時間（+8時區）
                 CreatedAt = s.CreatedAt.HasValue ? s.CreatedAt.Value.AddHours(8) : (DateTime?)null,
                 TotalAmount = s.TotalAmount,
-                PaymentStatus = s.PaymentStatus
+                PaymentStatus = s.PaymentStatus == "Pending" ? "待付款" : 
+                               s.PaymentStatus == "Paid" ? "已付款" : 
+                               s.PaymentStatus ?? "待付款"
             }).ToList();
 
             return Ok(result);
@@ -53,7 +55,9 @@ namespace Shopping.Controllers
                 // 將 UTC 時間轉換為台灣時間（+8時區）
                 CreatedAt = orderEntity.CreatedAt.HasValue ? orderEntity.CreatedAt.Value.AddHours(8) : (DateTime?)null,
                 TotalAmount = orderEntity.TotalAmount,
-                PaymentStatus = orderEntity.PaymentStatus,
+                PaymentStatus = orderEntity.PaymentStatus == "Pending" ? "待付款" : 
+                               orderEntity.PaymentStatus == "Paid" ? "已付款" : 
+                               orderEntity.PaymentStatus ?? "待付款",
                 Items = orderEntity.OrderItems.Select(i => new OrderItemDto
                 {
                     ProductName = i.Product.ProductName,
@@ -80,7 +84,7 @@ namespace Shopping.Controllers
             {
                 MemberId = memberId,
                 CreatedAt = DateTime.UtcNow,
-                PaymentStatus = "Pending",
+                PaymentStatus = "待付款",
                 TotalAmount = cart.CartItems.Sum(c => c.Quantity * (c.Product?.Price ?? 0)),
                 OrderItems = cart.CartItems.Select(c => new OrderItem
                 {

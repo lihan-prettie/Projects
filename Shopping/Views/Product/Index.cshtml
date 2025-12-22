@@ -55,16 +55,12 @@
                         <p class="card-text text-danger fw-bold text-center fs-5 mb-3">
                             <i class="bi bi-currency-dollar me-1"></i>@item.Price
                         </p>
-                        <p class="text-muted small text-center mb-3">
-                            <i class="bi bi-box-seam me-1"></i>庫存：@item.Stock
-                        </p>
 
                         @* 加入購物車 *@
                         <div class="mt-auto">
                             <input type="hidden" name="productId" value="@item.ProductId" />
 
                             <div class="mb-3">
-                                <label class="form-label small text-muted mb-1">數量</label>
                                 <div class="input-group">
                                     <button class="btn btn-outline-secondary" type="button"
                                         onclick="this.nextElementSibling.stepDown()"><strong

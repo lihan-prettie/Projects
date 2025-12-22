@@ -88,6 +88,21 @@
             });
         }
 
+        // 狀態映射函數，確保舊資料也能正確顯示
+        function getPaymentStatusText(status) {
+            const statusMap = {
+                'Paid': '已付款',
+                'Pending': '待付款',
+                '已付款': '已付款',
+                '待付款': '待付款'
+            };
+            return statusMap[status] || status || '待付款';
+        }
+
+        function isPaid(status) {
+            return status === '已付款' || status === 'Paid';
+        }
+
         document.addEventListener("DOMContentLoaded", loadOrders);
 
         async function loadOrders() {
@@ -113,13 +128,14 @@
             }
 
             orders.forEach(o => {
-                const statusClass = o.paymentStatus === '已付款' ? 'text-success' : 'text-warning';
+                const statusText = getPaymentStatusText(o.paymentStatus);
+                const isPaidStatus = isPaid(o.paymentStatus);
                 tbody.innerHTML += `
                     <tr>
                         <td class="fw-bold">#${o.orderId}</td>
                         <td>${formatTaiwanTime(o.createdAt)}</td>
                         <td class="fw-bold text-danger">NT$ ${o.totalAmount}</td>
-                        <td><span class="badge bg-${o.paymentStatus === '已付款' ? 'success' : 'warning'}">${o.paymentStatus}</span></td>
+                        <td><span class="badge bg-${isPaidStatus ? 'success' : 'warning'}">${statusText}</span></td>
                         <td class="text-center">
                             <button class="btn btn-sm btn-outline-primary"
                                 onclick="showDetail(${o.orderId})">
@@ -145,7 +161,7 @@
                     </div>
                     <div class="mb-3">
                         <strong><i class="bi bi-credit-card me-1"></i>付款狀態：</strong>
-                        <span class="badge bg-${order.paymentStatus === '已付款' ? 'success' : 'warning'}">${order.paymentStatus}</span>
+                        <span class="badge bg-${isPaid(order.paymentStatus) ? 'success' : 'warning'}">${getPaymentStatusText(order.paymentStatus)}</span>
                     </div>
                     <div class="mb-3">
                         <strong><i class="bi bi-cash-coin me-1"></i>總金額：</strong>

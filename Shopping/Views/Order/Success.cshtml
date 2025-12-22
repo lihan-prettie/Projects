@@ -25,12 +25,14 @@
             </div>
 
             <div class="d-flex justify-content-center gap-3 flex-wrap">
-                <a href="/Product/Index" class="btn btn-success btn-lg px-5">
+                <button id="btnGoShop" class="btn btn-success btn-lg px-5">
                     <i class="bi bi-arrow-left me-2"></i>繼續購物
-                </a>
-                <a href="/Member/OrderPage" class="btn btn-outline-primary btn-lg px-5">
+                </button>
+
+                <button id="btnGoOrders" class="btn btn-outline-primary btn-lg px-5">
                     <i class="bi bi-receipt me-2"></i>查看訂單
-                </a>
+                </button>
+
             </div>
         </div>
     </div>
@@ -39,15 +41,36 @@
 @section Scripts{
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.12.4/dist/sweetalert2.all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
-        document.addEventListener("DOMContentLoaded",async()=>{
+        document.addEventListener("DOMContentLoaded", () => {
             const params = new URLSearchParams(window.location.search);
             const orderId = params.get("orderId");
-            if(!orderId){
-             Swal.fire("無效頁面", "請從結帳流程完成訂單", "warning")
-            .then(() => location.href = "/Product/Index");
+
+            if (!orderId) {
+                Swal.fire("無效頁面", "請從結帳流程完成訂單", "warning")
+                    .then(() => location.href = "/Product/Index");
                 return;
             }
+
             document.getElementById("orderId").innerText = `#${orderId}`;
+
+            async function markPaidAndGo(url) {
+                try {
+                    await authFetch(`/api/orders/${orderId}/payment/mock-paid`, {
+                        method: "POST"
+                    });
+                } catch (e) {
+                    console.warn("付款狀態更新失敗（開發期可忽略）", e);
+                } finally {
+                    location.href = url;
+                }
+            }
+
+            document.getElementById("btnGoShop")
+                .addEventListener("click", () => markPaidAndGo("/Product/Index"));
+
+            document.getElementById("btnGoOrders")
+                .addEventListener("click", () => markPaidAndGo("/Member/OrderPage"));
         });
     </script>
+
 }
