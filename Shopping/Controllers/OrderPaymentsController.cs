@@ -24,7 +24,7 @@ namespace Shopping.Controllers
         }
 
         // ===============================
-        // 1️⃣ 建立付款流程（Pending → 綠界）
+        // 1 建立付款流程（Pending → 綠界）
         // POST /api/orders/{orderId}/payment
         // ===============================
         [HttpPost]
@@ -70,7 +70,7 @@ namespace Shopping.Controllers
         }
 
         // ===============================
-        // 2️⃣ 綠界付款結果回呼（改成 Paid）
+        // 2️ 綠界付款結果回呼（改成 Paid）
         // POST /api/payment/callback
         // ===============================
         [HttpPost("/api/payment/callback")]
@@ -178,7 +178,7 @@ namespace Shopping.Controllers
         }
 
         // ===============================
-        // 3️⃣ 查詢付款狀態
+        // 3️ 查詢付款狀態
         // GET /api/orders/{orderId}/payment
         // ===============================
         [HttpGet]
@@ -201,7 +201,7 @@ namespace Shopping.Controllers
         }
 
         // ===============================
-        // 4️⃣ 調試用：查看回調數據（僅開發環境）
+        // 4️ 調試用：查看回調數據（僅開發環境）
         // GET /api/payment/debug
         // ===============================
         [HttpGet("/api/payment/debug")]
@@ -266,7 +266,7 @@ namespace Shopping.Controllers
 
 
         // ===============================
-        // 🔐 CheckMacValue 工具
+        //  CheckMacValue 工具
         // ===============================
         private string GenerateCheckMacValue(Dictionary<string, string> data)
         {
